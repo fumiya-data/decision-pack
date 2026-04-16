@@ -1,0 +1,479 @@
+line_number,kind,column,raw_value,output_value,reason
+1,row_skipped,__row__," CustomerID ,full_name,email,phone,address_line,city,region,postal_code,country,birth_date,signup_date,last_purchase_date,status,tier,preferred_language,marketing_opt_in,total_spend,order_count,notes",,embedded header row inside the dataset
+3,field_failed,email,bob.garciademo.local,bob.garciademo.local,email must contain exactly one @
+18,field_failed,email,victor..scott@mail.test,victor..scott@mail.test,email must not contain consecutive dots
+32,field_failed,email,kenbrown@example..com,kenbrown@example..com,email must not contain consecutive dots
+45,field_failed,email,742.123.0940,742.123.0940,email must contain exactly one @
+45,field_failed,phone,heidi.moore5048 @ mail.test,5048,phone number must have 7 to 15 digits
+49,field_failed,CustomerID,,,CustomerID is required
+49,field_failed,email,090-6047-6580,090-6047-6580,email must contain exactly one @
+49,field_failed,phone,niaj.williams@example.net,,phone number must have 7 to 15 digits
+60,field_failed,email,quinn.nelsonmail.test,quinn.nelsonmail.test,email must contain exactly one @
+78,field_failed,CustomerID,,,CustomerID is required
+87,field_failed,CustomerID,,,CustomerID is required
+106,field_failed,email,mika..white@example.org,mika..white@example.org,email must not contain consecutive dots
+107,field_failed,email,02334245798,02334245798,email must contain exactly one @
+107,field_failed,phone,sora.walker@mail.test,,phone number must have 7 to 15 digits
+114,field_failed,status,??,??,unsupported status value
+129,field_failed,email,yvonne..harris@example.com,yvonne..harris@example.com,email must not contain consecutive dots
+137,field_failed,email,trudyking@mail..test,trudyking@mail..test,email must not contain consecutive dots
+155,field_failed,email,ivan..flores@example.net,ivan..flores@example.net,email must not contain consecutive dots
+163,field_failed,email,victor..taylor@example.org,victor..taylor@example.org,email must not contain consecutive dots
+166,field_failed,CustomerID,,,CustomerID is required
+185,field_failed,status,??,??,unsupported status value
+186,field_failed,CustomerID,,,CustomerID is required
+188,field_failed,status,??,??,unsupported status value
+203,field_failed,status,??,??,unsupported status value
+204,field_failed,status,??,??,unsupported status value
+243,field_failed,email,steve..adams@mail.test,steve..adams@mail.test,email must not contain consecutive dots
+244,field_failed,email,trudy..miller@example.org,trudy..miller@example.org,email must not contain consecutive dots
+248,field_failed,email,09-0078-83692,09-0078-83692,email must contain exactly one @
+248,field_failed,phone,ken.torres3168@mail.test,3168,phone number must have 7 to 15 digits
+250,field_failed,email,sora..garcia@demo.local,sora..garcia@demo.local,email must not contain consecutive dots
+252,field_failed,email,taro.harrismail.test,taro.harrismail.test,email must contain exactly one @
+259,field_failed,CustomerID,,,CustomerID is required
+301,field_failed,email,eve..johnson@example.net,eve..johnson@example.net,email must not contain consecutive dots
+305,field_failed,status,??,??,unsupported status value
+312,field_failed,CustomerID,,,CustomerID is required
+329,field_failed,status,??,??,unsupported status value
+336,field_failed,email,(737) 805-3425,(737)805-3425,email must contain exactly one @
+336,field_failed,phone,hana.wright@demo.local,,phone number must have 7 to 15 digits
+363,field_failed,email,wendy..robinson@demo.local,wendy..robinson@demo.local,email must not contain consecutive dots
+390,field_failed,email,ivan..allen@mail.test,ivan..allen@mail.test,email must not contain consecutive dots
+409,field_failed,CustomerID,,,CustomerID is required
+411,field_failed,status,??,??,unsupported status value
+412,field_failed,email,ivanwhite@mail..test,ivanwhite@mail..test,email must not contain consecutive dots
+436,field_failed,CustomerID,,,CustomerID is required
+441,field_failed,email,09-6500-74435,09-6500-74435,email must contain exactly one @
+441,field_failed,phone,wendy.thompson@example.net,,phone number must have 7 to 15 digits
+447,field_failed,email,xavier..davis@demo.local,xavier..davis@demo.local,email must not contain consecutive dots
+448,field_failed,email,abefj..ehocmm@demo.local,abefj..ehocmm@demo.local,email must not contain consecutive dots
+501,field_failed,CustomerID,,,CustomerID is required
+506,field_failed,email,rita_whiteexample.com,rita_whiteexample.com,email must contain exactly one @
+527,field_failed,email,hana..jones@example.net,hana..jones@example.net,email must not contain consecutive dots
+538,field_failed,email,carol-torres6238@example..com,carol-torres6238@example..com,email must not contain consecutive dots
+548,field_failed,status,??,??,unsupported status value
+556,field_failed,email,mika-brownmail.test,mika-brownmail.test,email must contain exactly one @
+559,field_failed,CustomerID,,,CustomerID is required
+564,field_failed,email,ezxqrobgiexample.com,ezxqrobgiexample.com,email must contain exactly one @
+577,field_failed,email,lhlt..epnhabxs@example.net,lhlt..epnhabxs@example.net,email must not contain consecutive dots
+594,field_failed,email,uma..thompson@mail.test,uma..thompson@mail.test,email must not contain consecutive dots
+595,field_failed,email,+81 47 1041 7628,+814710417628,email must contain exactly one @
+595,field_failed,phone,eve.thomas@example.org,,phone number must have 7 to 15 digits
+623,field_failed,CustomerID,,,CustomerID is required
+628,field_failed,email,yukijohnson@demo..local,yukijohnson@demo..local,email must not contain consecutive dots
+634,field_failed,email,grace.thomasexample.org,grace.thomasexample.org,email must contain exactly one @
+664,field_failed,email,xavier.garciamail.test,xavier.garciamail.test,email must contain exactly one @
+683,field_failed,email,08091099220,08091099220,email must contain exactly one @
+683,field_failed,phone,zyimf.iobfcvpzob@demo.local,,phone number must have 7 to 15 digits
+699,field_failed,email,(476) 932-5726,(476)932-5726,email must contain exactly one @
+699,field_failed,phone,wyrsshp.bgqpemexdo@demo.local,,phone number must have 7 to 15 digits
+701,field_failed,email,walter_wilson@example..net,walter_wilson@example..net,email must not contain consecutive dots
+716,field_failed,CustomerID,,,CustomerID is required
+725,field_failed,CustomerID,,,CustomerID is required
+749,field_failed,email,ivan..nguyen@mail.test,ivan..nguyen@mail.test,email must not contain consecutive dots
+763,field_failed,email,guobelxn.bewrhzexample.com,guobelxn.bewrhzexample.com,email must contain exactly one @
+779,field_failed,CustomerID,,,CustomerID is required
+796,field_failed,email,yuki..young@example.net,yuki..young@example.net,email must not contain consecutive dots
+802,field_failed,CustomerID,,,CustomerID is required
+808,field_failed,email,walter.thompsonmail.test,walter.thompsonmail.test,email must contain exactly one @
+839,field_failed,email,(268) 862-1946,(268)862-1946,email must contain exactly one @
+839,field_failed,phone,ymmpjsu.dgixtrk@example.org,,phone number must have 7 to 15 digits
+899,field_failed,email,ezwrecv..adtiertzo@demo.local,ezwrecv..adtiertzo@demo.local,email must not contain consecutive dots
+902,row_skipped,__row__,# EXPORT GENERATED BY CRM MIGRATION TOOL v2,,non-data line
+903,row_skipped,__row__," CustomerID ,full_name,email,phone,address_line,city,region,postal_code,country,birth_date,signup_date,last_purchase_date,status,tier,preferred_language,marketing_opt_in,total_spend,order_count,notes",,embedded header row inside the dataset
+904,field_failed,CustomerID,,,CustomerID is required
+904,field_failed,email,noid.person@@example,noid.person@@example,email must contain exactly one @
+904,field_failed,birth_date,1988-13-40,1988-13-40,date is out of range
+904,field_failed,signup_date,2024-02-30,2024-02-30,date is out of range
+904,field_failed,last_purchase_date,not-a-date,not-a-date,invalid year
+904,field_failed,marketing_opt_in,maybe,maybe,unsupported marketing_opt_in value
+915,field_failed,email,sfibsdddmatdjlgatsexample.net,sfibsdddmatdjlgatsexample.net,email must contain exactly one @
+957,field_failed,email,sybil..nelson@demo.local,sybil..nelson@demo.local,email must not contain consecutive dots
+963,field_failed,email,trent..hill@example.net,trent..hill@example.net,email must not contain consecutive dots
+970,field_failed,email,apjwqco.aobsdeexample.org,apjwqco.aobsdeexample.org,email must contain exactly one @
+980,field_failed,status,??,??,unsupported status value
+981,field_failed,email,heidi..williams@mail.test,heidi..williams@mail.test,email must not contain consecutive dots
+993,field_failed,CustomerID,,,CustomerID is required
+995,field_failed,email,090-2026-1448,090-2026-1448,email must contain exactly one @
+995,field_failed,phone,szkmhzk.znmiaij@mail.test,,phone number must have 7 to 15 digits
+1009,field_failed,CustomerID,,,CustomerID is required
+1022,field_failed,CustomerID,,,CustomerID is required
+1027,field_failed,CustomerID,,,CustomerID is required
+1027,field_failed,email,qujbukf.ibbkzxlfexample.org,qujbukf.ibbkzxlfexample.org,email must contain exactly one @
+1030,field_failed,email,alice.jonesdemo.local,alice.jonesdemo.local,email must contain exactly one @
+1036,field_failed,email,bsicc..mfgfbtzb@example.net,bsicc..mfgfbtzb@example.net,email must not contain consecutive dots
+1043,field_failed,CustomerID,,,CustomerID is required
+1064,field_failed,email,04277904899,04277904899,email must contain exactly one @
+1064,field_failed,phone,heidi.jones6468@example.com,6468,phone number must have 7 to 15 digits
+1086,field_failed,email,olivia.wrightmail.test,olivia.wrightmail.test,email must contain exactly one @
+1123,field_failed,email,malloryandersonexample.org,malloryandersonexample.org,email must contain exactly one @
+1137,field_failed,email,1455751787,1455751787,email must contain exactly one @
+1141,field_failed,email,08-0773-96001,08-0773-96001,email must contain exactly one @
+1141,field_failed,phone,judy.anderson@example.net,,phone number must have 7 to 15 digits
+1179,field_failed,email,yerhy..uxoysmsufv@example.net,yerhy..uxoysmsufv@example.net,email must not contain consecutive dots
+1188,field_failed,email,881.557.1600,881.557.1600,email must contain exactly one @
+1188,field_failed,phone,hccwoxjp_abfnlzxkeg@demo.local,,phone number must have 7 to 15 digits
+1189,field_failed,email,7573252342,7573252342,email must contain exactly one @
+1189,field_failed,phone,hana.white @ example.org,,phone number must have 7 to 15 digits
+1218,field_failed,status,??,??,unsupported status value
+1219,field_failed,status,??,??,unsupported status value
+1226,field_failed,CustomerID,,,CustomerID is required
+1235,field_failed,CustomerID,,,CustomerID is required
+1242,field_failed,CustomerID,,,CustomerID is required
+1257,field_failed,email,+81 90 4297 6006,+819042976006,email must contain exactly one @
+1257,field_failed,phone,ryo.king@example.net,,phone number must have 7 to 15 digits
+1273,field_failed,email,judy.garciademo.local,judy.garciademo.local,email must contain exactly one @
+1276,field_failed,email,heidi.brownexample.com,heidi.brownexample.com,email must contain exactly one @
+1277,field_failed,email,victor-johnson@demo..local,victor-johnson@demo..local,email must not contain consecutive dots
+1281,field_failed,email,vwvzsbnh..apjshjbrcx@mail.test,vwvzsbnh..apjshjbrcx@mail.test,email must not contain consecutive dots
+1290,field_failed,CustomerID,,,CustomerID is required
+1295,field_failed,email,(110) 926-5479,(110)926-5479,email must contain exactly one @
+1295,field_failed,phone,heidi.anderson@example.org,,phone number must have 7 to 15 digits
+1296,field_failed,CustomerID,,,CustomerID is required
+1296,field_failed,email,oliviajonesdemo.local,oliviajonesdemo.local,email must contain exactly one @
+1307,field_failed,status,??,??,unsupported status value
+1320,field_failed,email,+81 70 3110 5828,+817031105828,email must contain exactly one @
+1320,field_failed,phone,grace_miller@example.com,,phone number must have 7 to 15 digits
+1332,field_failed,status,??,??,unsupported status value
+1333,field_failed,email,tjxil_nahrcn7359@mail..test,tjxil_nahrcn7359@mail..test,email must not contain consecutive dots
+1342,field_failed,email,bob_harrisexample.org,bob_harrisexample.org,email must contain exactly one @
+1346,field_failed,email,sora..harris@mail.test,sora..harris@mail.test,email must not contain consecutive dots
+1350,field_failed,email,oliviawilson@example..org,oliviawilson@example..org,email must not contain consecutive dots
+1356,field_failed,CustomerID,,,CustomerID is required
+1358,field_failed,CustomerID,,,CustomerID is required
+1369,field_failed,CustomerID,,,CustomerID is required
+1375,field_failed,email,031-4424-2910,031-4424-2910,email must contain exactly one @
+1375,field_failed,phone,dave.hill@mail.test,,phone number must have 7 to 15 digits
+1382,field_failed,email,vekorb..tovngbj@mail.test,vekorb..tovngbj@mail.test,email must not contain consecutive dots
+1384,field_failed,email,070-4920-6090,070-4920-6090,email must contain exactly one @
+1384,field_failed,phone,cvzvho.fnfuk@example.net,,phone number must have 7 to 15 digits
+1385,field_failed,CustomerID,,,CustomerID is required
+1399,field_failed,CustomerID,,,CustomerID is required
+1417,field_failed,status,??,??,unsupported status value
+1419,field_failed,email,fhpuyxywxgtjjnxcyv@example..net,fhpuyxywxgtjjnxcyv@example..net,email must not contain consecutive dots
+1431,field_failed,CustomerID,,,CustomerID is required
+1434,field_failed,email,izfxp.polrtoqmail.test,izfxp.polrtoqmail.test,email must contain exactly one @
+1450,field_failed,email,jjkn..hoinfj@example.com,jjkn..hoinfj@example.com,email must not contain consecutive dots
+1463,field_failed,CustomerID,,,CustomerID is required
+1476,field_failed,email,victor..hill@mail.test,victor..hill@mail.test,email must not contain consecutive dots
+1507,field_failed,email,ryo.moore8325mail.test,ryo.moore8325mail.test,email must contain exactly one @
+1509,field_failed,status,??,??,unsupported status value
+1523,field_failed,email,ryo..scott@demo.local,ryo..scott@demo.local,email must not contain consecutive dots
+1531,field_failed,email,tznm..popvu@example.org,tznm..popvu@example.org,email must not contain consecutive dots
+1536,field_failed,status,??,??,unsupported status value
+1570,field_failed,email,aoedy.dcldwtruexample.org,aoedy.dcldwtruexample.org,email must contain exactly one @
+1603,field_failed,email,carol.walkerdemo.local,carol.walkerdemo.local,email must contain exactly one @
+1605,field_failed,email,judy..johnson@example.org,judy..johnson@example.org,email must not contain consecutive dots
+1610,field_failed,email,iiaj..fsqboztqw2731@example.net,iiaj..fsqboztqw2731@example.net,email must not contain consecutive dots
+1611,field_failed,CustomerID,,,CustomerID is required
+1618,field_failed,email,+81 70 9140 9378,+817091409378,email must contain exactly one @
+1618,field_failed,phone,iiqwbjob.gfwsikcjbz@demo.local,,phone number must have 7 to 15 digits
+1621,field_failed,CustomerID,,,CustomerID is required
+1630,field_failed,status,??,??,unsupported status value
+1637,field_failed,email,frank..jackson@example.org,frank..jackson@example.org,email must not contain consecutive dots
+1642,field_failed,email,armmd..vdqdbqleln@example.net,armmd..vdqdbqleln@example.net,email must not contain consecutive dots
+1654,field_failed,status,??,??,unsupported status value
+1662,field_failed,email,looupdqj..gefgd@mail.test,looupdqj..gefgd@mail.test,email must not contain consecutive dots
+1664,field_failed,status,??,??,unsupported status value
+1667,field_failed,CustomerID,,,CustomerID is required
+1672,field_failed,email,315.663.3516,315.663.3516,email must contain exactly one @
+1672,field_failed,phone,kjilb.maqos @ example.net,,phone number must have 7 to 15 digits
+1674,field_failed,email,yvonneramirez@demo..local,yvonneramirez@demo..local,email must not contain consecutive dots
+1697,field_failed,CustomerID,,,CustomerID is required
+1699,field_failed,email,ivan-andersondemo.local,ivan-andersondemo.local,email must contain exactly one @
+1708,field_failed,CustomerID,,,CustomerID is required
+1717,field_failed,email,rhouikpb.wrklsfowpexample.net,rhouikpb.wrklsfowpexample.net,email must contain exactly one @
+1723,field_failed,CustomerID,,,CustomerID is required
+1726,field_failed,email,fbcgzkv.bpilrkjkiexample.org,fbcgzkv.bpilrkjkiexample.org,email must contain exactly one @
+1732,field_failed,email,uma..miller@example.net,uma..miller@example.net,email must not contain consecutive dots
+1797,field_failed,email,uijdwh..pmoyvifhqa@example.net,uijdwh..pmoyvifhqa@example.net,email must not contain consecutive dots
+1804,field_failed,email,nfjbtvsd..tnslbj@example.com,nfjbtvsd..tnslbj@example.com,email must not contain consecutive dots
+1809,field_failed,email,duenivm..aadenqnuwm@example.org,duenivm..aadenqnuwm@example.org,email must not contain consecutive dots
+1814,field_failed,status,??,??,unsupported status value
+1851,field_failed,CustomerID,,,CustomerID is required
+1865,field_failed,status,??,??,unsupported status value
+1870,field_failed,email,carol-williams@example..com,carol-williams@example..com,email must not contain consecutive dots
+1885,field_failed,email,rita..clark@example.com,rita..clark@example.com,email must not contain consecutive dots
+1889,field_failed,status,??,??,unsupported status value
+1890,field_failed,email,pcbs.hkckuwexample.net,pcbs.hkckuwexample.net,email must contain exactly one @
+1892,field_failed,status,??,??,unsupported status value
+1895,field_failed,CustomerID,,,CustomerID is required
+1903,field_failed,status,??,??,unsupported status value
+1904,field_failed,status,??,??,unsupported status value
+1905,field_failed,email,ivan_martinezdemo.local,ivan_martinezdemo.local,email must contain exactly one @
+1915,field_failed,email,mallory.leedemo.local,mallory.leedemo.local,email must contain exactly one @
+1931,field_failed,status,??,??,unsupported status value
+1959,field_failed,status,??,??,unsupported status value
+1974,field_failed,email,rita.clarkexample.net,rita.clarkexample.net,email must contain exactly one @
+1992,field_failed,email,trent..white@example.com,trent..white@example.com,email must not contain consecutive dots
+1993,field_failed,email,lsbua..rljbyzmyj@example.com,lsbua..rljbyzmyj@example.com,email must not contain consecutive dots
+2001,field_failed,CustomerID,,,CustomerID is required
+2016,field_failed,CustomerID,,,CustomerID is required
+2021,field_failed,CustomerID,,,CustomerID is required
+2021,field_failed,email,mika..allen@demo.local,mika..allen@demo.local,email must not contain consecutive dots
+2062,field_failed,email,dlxj..cjgmaumgea@mail.test,dlxj..cjgmaumgea@mail.test,email must not contain consecutive dots
+2074,field_failed,email,yvonne_moore@mail..test,yvonne_moore@mail..test,email must not contain consecutive dots
+2076,field_failed,CustomerID,,,CustomerID is required
+2081,field_failed,status,??,??,unsupported status value
+2083,field_failed,CustomerID,,,CustomerID is required
+2087,field_failed,email,rita..perez@example.net,rita..perez@example.net,email must not contain consecutive dots
+2149,field_failed,status,??,??,unsupported status value
+2152,field_failed,CustomerID,,,CustomerID is required
+2168,field_failed,status,??,??,unsupported status value
+2187,field_failed,email,victor.whitemail.test,victor.whitemail.test,email must contain exactly one @
+2189,field_failed,email,jsnppjsz.jmxxiybp4649mail.test,jsnppjsz.jmxxiybp4649mail.test,email must contain exactly one @
+2192,field_failed,email,01710353233,01710353233,email must contain exactly one @
+2192,field_failed,phone,futyn.potjijekjl@example.net,,phone number must have 7 to 15 digits
+2204,field_failed,CustomerID,,,CustomerID is required
+2209,field_failed,email,uma.wilsonexample.com,uma.wilsonexample.com,email must contain exactly one @
+2222,field_failed,email,grace_allen@mail..test,grace_allen@mail..test,email must not contain consecutive dots
+2224,field_failed,CustomerID,,,CustomerID is required
+2267,field_failed,CustomerID,,,CustomerID is required
+2278,field_failed,email,vhdkbis.zfgjpjmail.test,vhdkbis.zfgjpjmail.test,email must contain exactly one @
+2288,field_failed,email,thrr.jbvyhudemo.local,thrr.jbvyhudemo.local,email must contain exactly one @
+2313,field_failed,email,phkkkqu.stcjixjexample.com,phkkkqu.stcjixjexample.com,email must contain exactly one @
+2316,field_failed,email,bob..moore@mail.test,bob..moore@mail.test,email must not contain consecutive dots
+2322,field_failed,email,+1 639 401 4536,+16394014536,email must contain exactly one @
+2322,field_failed,phone,okywt.iyaqoeahdj @ example.net,,phone number must have 7 to 15 digits
+2347,field_failed,CustomerID,,,CustomerID is required
+2364,field_failed,email,grace.martinezexample.org,grace.martinezexample.org,email must contain exactly one @
+2366,field_failed,email,bob_johnsonmail.test,bob_johnsonmail.test,email must contain exactly one @
+2435,field_failed,email,peggyrobinson5163@demo..local,peggyrobinson5163@demo..local,email must not contain consecutive dots
+2441,field_failed,email,eve..allen@example.net,eve..allen@example.net,email must not contain consecutive dots
+2457,field_failed,email,hhmmivqi..jpmqqwszb@demo.local,hhmmivqi..jpmqqwszb@demo.local,email must not contain consecutive dots
+2502,field_failed,email,carol.floresexample.com,carol.floresexample.com,email must contain exactly one @
+2503,field_failed,email,steve..davis@example.com,steve..davis@example.com,email must not contain consecutive dots
+2505,field_failed,email,ken..johnson@example.net,ken..johnson@example.net,email must not contain consecutive dots
+2508,field_failed,CustomerID,,,CustomerID is required
+2531,field_failed,CustomerID,,,CustomerID is required
+2536,field_failed,email,bob.garciademo.local,bob.garciademo.local,email must contain exactly one @
+2543,field_failed,email,victor-sanchez@mail..test,victor-sanchez@mail..test,email must not contain consecutive dots
+2549,field_failed,CustomerID,,,CustomerID is required
+2556,field_failed,status,??,??,unsupported status value
+2563,field_failed,email,05-4543-18469,05-4543-18469,email must contain exactly one @
+2563,field_failed,phone,judy.wilson@mail.test,,phone number must have 7 to 15 digits
+2567,field_failed,email,eelt..gktwipnjyb@example.org,eelt..gktwipnjyb@example.org,email must not contain consecutive dots
+2592,field_failed,CustomerID,,,CustomerID is required
+2606,field_failed,birth_date,1979-11-31,1979-11-31,date is out of range
+2606,field_failed,signup_date,2024/13/01,2024/13/01,date is out of range
+2615,field_failed,CustomerID,,,CustomerID is required
+2623,field_failed,email,sybil.wilsonexample.org,sybil.wilsonexample.org,email must contain exactly one @
+2640,field_failed,email,xwlxer..mgfvfub@example.com,xwlxer..mgfvfub@example.com,email must not contain consecutive dots
+2665,field_failed,CustomerID,,,CustomerID is required
+2711,field_failed,email,uma..clark@example.net,uma..clark@example.net,email must not contain consecutive dots
+2719,field_failed,CustomerID,,,CustomerID is required
+2736,field_failed,email,mallory.wright3485mail.test,mallory.wright3485mail.test,email must contain exactly one @
+2741,field_failed,email,rita-jacksonexample.com,rita-jacksonexample.com,email must contain exactly one @
+2750,field_failed,email,+81 80 4542 4839,+818045424839,email must contain exactly one @
+2750,field_failed,phone,ctsknz.kyziljub@demo.local,,phone number must have 7 to 15 digits
+2752,field_failed,email,xipltv..tnvqb@example.org,xipltv..tnvqb@example.org,email must not contain consecutive dots
+2762,field_failed,email,eve_smith5700example.net,eve_smith5700example.net,email must contain exactly one @
+2774,field_failed,CustomerID,,,CustomerID is required
+2787,field_failed,email,steve_brown@example..net,steve_brown@example..net,email must not contain consecutive dots
+2795,field_failed,email,ujiutl.nxqmvhze8802example.org,ujiutl.nxqmvhze8802example.org,email must contain exactly one @
+2813,field_failed,CustomerID,,,CustomerID is required
+2835,field_failed,status,??,??,unsupported status value
+2841,field_failed,email,fjhssk.qhsmflcvexample.net,fjhssk.qhsmflcvexample.net,email must contain exactly one @
+2857,field_failed,email,ryo.whitedemo.local,ryo.whitedemo.local,email must contain exactly one @
+2869,field_failed,CustomerID,,,CustomerID is required
+2874,field_failed,status,??,??,unsupported status value
+2885,field_failed,CustomerID,,,CustomerID is required
+2891,field_failed,CustomerID,,,CustomerID is required
+2911,field_failed,email,ryo..robinson@example.org,ryo..robinson@example.org,email must not contain consecutive dots
+2922,field_failed,status,??,??,unsupported status value
+2938,field_failed,CustomerID,,,CustomerID is required
+2941,field_failed,email,piqpwmu..rnynsia@demo.local,piqpwmu..rnynsia@demo.local,email must not contain consecutive dots
+2945,field_failed,status,??,??,unsupported status value
+2961,field_failed,status,??,??,unsupported status value
+2973,field_failed,CustomerID,,,CustomerID is required
+2979,field_failed,CustomerID,,,CustomerID is required
+2980,field_failed,email,haony..tqjej@example.net,haony..tqjej@example.net,email must not contain consecutive dots
+2988,field_failed,CustomerID,,,CustomerID is required
+2988,field_failed,email,steve-young@mail..test,steve-young@mail..test,email must not contain consecutive dots
+2992,field_failed,email,trentthompson@demo..local,trentthompson@demo..local,email must not contain consecutive dots
+2997,field_failed,CustomerID,,,CustomerID is required
+3001,field_failed,CustomerID,,,CustomerID is required
+3016,field_failed,email,umaharris@example..org,umaharris@example..org,email must not contain consecutive dots
+3028,field_failed,status,??,??,unsupported status value
+3041,field_failed,email,peggygarcia@mail..test,peggygarcia@mail..test,email must not contain consecutive dots
+3046,field_failed,phone,tsda.aneiz@mail.test,,phone number must have 7 to 15 digits
+3053,field_failed,email,nwxl.rhncijmbxexample.net,nwxl.rhncijmbxexample.net,email must contain exactly one @
+3076,field_failed,email,zara..jackson@example.org,zara..jackson@example.org,email must not contain consecutive dots
+3089,field_failed,CustomerID,,,CustomerID is required
+3091,field_failed,CustomerID,,,CustomerID is required
+3093,field_failed,email,gpqyqesc..uusziyvx@example.net,gpqyqesc..uusziyvx@example.net,email must not contain consecutive dots
+3128,field_failed,CustomerID,,,CustomerID is required
+3165,field_failed,status,??,??,unsupported status value
+3170,field_failed,CustomerID,,,CustomerID is required
+3188,field_failed,CustomerID,,,CustomerID is required
+3190,field_failed,CustomerID,,,CustomerID is required
+3192,field_failed,email,wendy..jones@example.org,wendy..jones@example.org,email must not contain consecutive dots
+3201,field_failed,CustomerID,,,CustomerID is required
+3210,field_failed,phone,tpnoe.lsmzra@example.org,,phone number must have 7 to 15 digits
+3228,field_failed,email,+81-80-7938-2065,+81-80-7938-2065,email must contain exactly one @
+3228,field_failed,phone,sora.hill@example.net,,phone number must have 7 to 15 digits
+3230,field_failed,email,oekfsner-mwvwkh@mail..test,oekfsner-mwvwkh@mail..test,email must not contain consecutive dots
+3232,field_failed,email,eoevmtiy_wxoxj@example..org,eoevmtiy_wxoxj@example..org,email must not contain consecutive dots
+3244,field_failed,email,ivan.davisdemo.local,ivan.davisdemo.local,email must contain exactly one @
+3250,field_failed,email,09083519153,09083519153,email must contain exactly one @
+3250,field_failed,phone,ybvsyapy.zvrlawlr@demo.local,,phone number must have 7 to 15 digits
+3268,field_failed,email,tektgvk.izukwexample.org,tektgvk.izukwexample.org,email must contain exactly one @
+3279,field_failed,CustomerID,,,CustomerID is required
+3301,field_failed,email,judy.nguyenmail.test,judy.nguyenmail.test,email must contain exactly one @
+3306,field_failed,email,zara.adamsexample.com,zara.adamsexample.com,email must contain exactly one @
+3327,field_failed,email,ycjdxkvtgleahxmail.test,ycjdxkvtgleahxmail.test,email must contain exactly one @
+3329,field_failed,email,qoys..akeetsebw@example.net,qoys..akeetsebw@example.net,email must not contain consecutive dots
+3338,field_failed,email,jwcrv.cjloypwnjhexample.com,jwcrv.cjloypwnjhexample.com,email must contain exactly one @
+3342,field_failed,email,bob-whiteexample.org,bob-whiteexample.org,email must contain exactly one @
+3345,field_failed,email,walter..lee@demo.local,walter..lee@demo.local,email must not contain consecutive dots
+3348,field_failed,email,taro_robinsonexample.com,taro_robinsonexample.com,email must contain exactly one @
+3349,field_failed,email,yvonne.millermail.test,yvonne.millermail.test,email must contain exactly one @
+3350,field_failed,email,519-828-1066,519-828-1066,email must contain exactly one @
+3350,field_failed,phone,nvalif.vahbqfys@example.org,,phone number must have 7 to 15 digits
+3354,field_failed,email,taro..white@example.org,taro..white@example.org,email must not contain consecutive dots
+3387,field_failed,CustomerID,,,CustomerID is required
+3403,field_failed,email,csuzrt..nukqb@example.net,csuzrt..nukqb@example.net,email must not contain consecutive dots
+3410,field_failed,status,??,??,unsupported status value
+3416,field_failed,email,zara.wrightexample.org,zara.wrightexample.org,email must contain exactly one @
+3444,field_failed,email,072.316.4262,072.316.4262,email must contain exactly one @
+3444,field_failed,phone,yuki.green@example.net,,phone number must have 7 to 15 digits
+3454,field_failed,CustomerID,,,CustomerID is required
+3458,field_failed,email,olivia.thompsonexample.org,olivia.thompsonexample.org,email must contain exactly one @
+3489,field_failed,CustomerID,,,CustomerID is required
+3504,field_failed,email,alice..thomas@example.net,alice..thomas@example.net,email must not contain consecutive dots
+3535,field_failed,email,ken..wright@example.com,ken..wright@example.com,email must not contain consecutive dots
+3537,field_failed,email,zara..wright@mail.test,zara..wright@mail.test,email must not contain consecutive dots
+3544,field_failed,email,sjvyxym..xbqramuxgu@mail.test,sjvyxym..xbqramuxgu@mail.test,email must not contain consecutive dots
+3552,field_failed,email,767-424-8372,767-424-8372,email must contain exactly one @
+3552,field_failed,phone,olivia.anderson9866@example.com,9866,phone number must have 7 to 15 digits
+3595,field_failed,email,qnxtwhbm.zhxupcycdemo.local,qnxtwhbm.zhxupcycdemo.local,email must contain exactly one @
+3604,field_failed,email,oscar..moore@example.org,oscar..moore@example.org,email must not contain consecutive dots
+3610,field_failed,status,??,??,unsupported status value
+3611,field_failed,email,ibsekup.vpjzyexample.com,ibsekup.vpjzyexample.com,email must contain exactly one @
+3630,field_failed,email,victor.youngdemo.local,victor.youngdemo.local,email must contain exactly one @
+3631,field_failed,email,walter..anderson826@demo.local,walter..anderson826@demo.local,email must not contain consecutive dots
+3641,field_failed,status,??,??,unsupported status value
+3663,field_failed,CustomerID,,,CustomerID is required
+3671,field_failed,CustomerID,,,CustomerID is required
+3676,field_failed,CustomerID,,,CustomerID is required
+3679,field_failed,email,vmdaji..bwqtt2371@example.net,vmdaji..bwqtt2371@example.net,email must not contain consecutive dots
+3732,field_failed,email,tifealn.ohrlaqqpexample.net,tifealn.ohrlaqqpexample.net,email must contain exactly one @
+3755,field_failed,email,eve..anderson5045@demo.local,eve..anderson5045@demo.local,email must not contain consecutive dots
+3764,field_failed,status,??,??,unsupported status value
+3775,field_failed,status,??,??,unsupported status value
+3776,field_failed,CustomerID,,,CustomerID is required
+3784,field_failed,email,rxsocvg_slxrcflmcsexample.com,rxsocvg_slxrcflmcsexample.com,email must contain exactly one @
+3794,field_failed,email,iywjisa..qzocqgcg@example.com,iywjisa..qzocqgcg@example.com,email must not contain consecutive dots
+3812,field_failed,status,??,??,unsupported status value
+3828,field_failed,CustomerID,,,CustomerID is required
+3830,field_failed,CustomerID,,,CustomerID is required
+3841,field_failed,status,??,??,unsupported status value
+3848,field_failed,email,carol.rodriguezdemo.local,carol.rodriguezdemo.local,email must contain exactly one @
+3861,field_failed,CustomerID,,,CustomerID is required
+3869,field_failed,email,kqqr_oejusfms@mail..test,kqqr_oejusfms@mail..test,email must not contain consecutive dots
+3877,field_failed,email,djbuhddp.azjmhcexample.com,djbuhddp.azjmhcexample.com,email must contain exactly one @
+3881,field_failed,email,mallory.mooreexample.org,mallory.mooreexample.org,email must contain exactly one @
+3890,field_failed,CustomerID,,,CustomerID is required
+3896,field_failed,email,grace..nelson@example.org,grace..nelson@example.org,email must not contain consecutive dots
+3897,field_failed,email,hana..king6578@example.org,hana..king6578@example.org,email must not contain consecutive dots
+3902,field_failed,email,mvrsvgtw-nghshaxnt5995example.org,mvrsvgtw-nghshaxnt5995example.org,email must contain exactly one @
+3907,field_failed,email,bob..adams@mail.test,bob..adams@mail.test,email must not contain consecutive dots
+3946,field_failed,email,oqyag..zdnqtpxg7681@example.com,oqyag..zdnqtpxg7681@example.com,email must not contain consecutive dots
+3959,field_failed,email,543.427.8796,543.427.8796,email must contain exactly one @
+3959,field_failed,phone,olivia.jackson @ demo.local,,phone number must have 7 to 15 digits
+3962,field_failed,email,niaj.young554example.net,niaj.young554example.net,email must contain exactly one @
+3967,field_failed,email,692-507-0879,692-507-0879,email must contain exactly one @
+3967,field_failed,phone,carol.thompson@mail.test,,phone number must have 7 to 15 digits
+3969,field_failed,email,fyjhl.xivwtsexample.net,fyjhl.xivwtsexample.net,email must contain exactly one @
+3975,field_failed,CustomerID,,,CustomerID is required
+3979,field_failed,email,steve.youngexample.net,steve.youngexample.net,email must contain exactly one @
+3985,field_failed,email,alice.perezdemo.local,alice.perezdemo.local,email must contain exactly one @
+3996,field_failed,CustomerID,,,CustomerID is required
+3997,field_failed,email,yvonne..thompson@mail.test,yvonne..thompson@mail.test,email must not contain consecutive dots
+4027,field_failed,email,mika..johnson@example.net,mika..johnson@example.net,email must not contain consecutive dots
+4061,field_failed,email,niajking@example..org,niajking@example..org,email must not contain consecutive dots
+4086,field_failed,email,carol.kingexample.org,carol.kingexample.org,email must contain exactly one @
+4091,field_failed,email,ryo.thomasexample.org,ryo.thomasexample.org,email must contain exactly one @
+4097,field_failed,CustomerID,,,CustomerID is required
+4100,field_failed,email,oscar..brown@demo.local,oscar..brown@demo.local,email must not contain consecutive dots
+4118,field_failed,status,??,??,unsupported status value
+4125,field_failed,status,??,??,unsupported status value
+4129,field_failed,CustomerID,,,CustomerID is required
+4160,field_failed,CustomerID,,,CustomerID is required
+4170,field_failed,email,hbsoomx..uzmcw3616@example.net,hbsoomx..uzmcw3616@example.net,email must not contain consecutive dots
+4177,field_failed,email,gffisl.djwvupllmail.test,gffisl.djwvupllmail.test,email must contain exactly one @
+4215,row_skipped,__row__,// stale row below was never deleted by upstream export,,non-data line
+4216,row_malformed,__row__,"CUST050009,""Broken Quote,jq@example.com,555-0000,""8 Quote St"",Boston,MA,02110,United States,1989-01-01,2024-01-01,2024-02-02,active,silver,en,1,77.77,1,unmatched quote in second column",,expected 19 columns but found 16
+4243,field_failed,status,??,??,unsupported status value
+4249,field_failed,email,yuki..jones@demo.local,yuki..jones@demo.local,email must not contain consecutive dots
+4263,field_failed,email,pchoot-mxxsjofg@example..com,pchoot-mxxsjofg@example..com,email must not contain consecutive dots
+4284,field_failed,status,??,??,unsupported status value
+4289,field_failed,email,fyukva.jqbha7510example.org,fyukva.jqbha7510example.org,email must contain exactly one @
+4290,field_failed,CustomerID,,,CustomerID is required
+4307,field_failed,CustomerID,,,CustomerID is required
+4321,field_failed,email,judy_scottdemo.local,judy_scottdemo.local,email must contain exactly one @
+4324,field_failed,status,??,??,unsupported status value
+4328,field_failed,status,??,??,unsupported status value
+4344,field_failed,CustomerID,,,CustomerID is required
+4372,field_failed,email,oliviaanderson@example..net,oliviaanderson@example..net,email must not contain consecutive dots
+4387,field_failed,status,??,??,unsupported status value
+4391,field_failed,email,05-2995-36666,05-2995-36666,email must contain exactly one @
+4391,field_failed,phone,nnkffcee.uqsdk@demo.local,,phone number must have 7 to 15 digits
+4393,field_failed,email,886.493.5535,886.493.5535,email must contain exactly one @
+4393,field_failed,phone,yuki.adams@example.net,,phone number must have 7 to 15 digits
+4416,field_failed,email,106.115.7326,106.115.7326,email must contain exactly one @
+4416,field_failed,phone,rutagxbp.lpsfpzwxau@mail.test,,phone number must have 7 to 15 digits
+4422,field_failed,email,judy.wilson2012example.com,judy.wilson2012example.com,email must contain exactly one @
+4437,field_failed,CustomerID,,,CustomerID is required
+4438,field_failed,CustomerID,,,CustomerID is required
+4444,field_failed,email,yghzdafj..qiewccfdx@example.com,yghzdafj..qiewccfdx@example.com,email must not contain consecutive dots
+4448,field_failed,email,trudy..martin@demo.local,trudy..martin@demo.local,email must not contain consecutive dots
+4450,field_failed,email,jklmkic..chdqk@demo.local,jklmkic..chdqk@demo.local,email must not contain consecutive dots
+4478,field_failed,email,odcb.omqfiyyfywexample.net,odcb.omqfiyyfywexample.net,email must contain exactly one @
+4499,field_failed,CustomerID,,,CustomerID is required
+4499,field_failed,email,trudyscott9113@demo..local,trudyscott9113@demo..local,email must not contain consecutive dots
+4503,field_failed,email,paqtt_osmqut@mail..test,paqtt_osmqut@mail..test,email must not contain consecutive dots
+4508,field_failed,CustomerID,,,CustomerID is required
+4519,field_failed,email,mhlafhlo.ikjextaekdemo.local,mhlafhlo.ikjextaekdemo.local,email must contain exactly one @
+4526,field_failed,status,??,??,unsupported status value
+4536,field_failed,CustomerID,,,CustomerID is required
+4549,field_failed,email,mbfsjp..vozfhsegec@example.com,mbfsjp..vozfhsegec@example.com,email must not contain consecutive dots
+4567,field_failed,CustomerID,,,CustomerID is required
+4571,field_failed,status,??,??,unsupported status value
+4584,field_failed,email,aysc..fiszjbgdw@demo.local,aysc..fiszjbgdw@demo.local,email must not contain consecutive dots
+4586,field_failed,status,??,??,unsupported status value
+4596,field_failed,email,krpeeh.uncogylhxexample.com,krpeeh.uncogylhxexample.com,email must contain exactly one @
+4600,field_failed,email,bthqjyvwu@mail..test,bthqjyvwu@mail..test,email must not contain consecutive dots
+4601,field_failed,CustomerID,,,CustomerID is required
+4604,field_failed,CustomerID,,,CustomerID is required
+4611,field_failed,email,(608) 017-7159,(608)017-7159,email must contain exactly one @
+4611,field_failed,phone,walter.adams@demo.local,,phone number must have 7 to 15 digits
+4636,field_failed,email,wendy.greenexample.org,wendy.greenexample.org,email must contain exactly one @
+4640,field_failed,email,grace.greenexample.net,grace.greenexample.net,email must contain exactly one @
+4645,field_failed,email,tjntjv.wqyhdimail.test,tjntjv.wqyhdimail.test,email must contain exactly one @
+4670,field_failed,CustomerID,,,CustomerID is required
+4688,field_failed,CustomerID,,,CustomerID is required
+4709,field_failed,email,ryo_garciamail.test,ryo_garciamail.test,email must contain exactly one @
+4719,field_failed,email,+81 80 0724 6179,+818007246179,email must contain exactly one @
+4719,field_failed,phone,sdvvhzvb.wmxcydt@example.org,,phone number must have 7 to 15 digits
+4752,field_failed,email,bob.thomasexample.com,bob.thomasexample.com,email must contain exactly one @
+4766,field_failed,email,+81-90-7454-8029,+81-90-7454-8029,email must contain exactly one @
+4766,field_failed,phone,zara.andersonexample.com,,phone number must have 7 to 15 digits
+4784,field_failed,CustomerID,,,CustomerID is required
+4803,field_failed,email,bob..green@example.net,bob..green@example.net,email must not contain consecutive dots
+4813,field_failed,email,trudy-andersonexample.com,trudy-andersonexample.com,email must contain exactly one @
+4817,field_failed,CustomerID,,,CustomerID is required
+4820,field_failed,email,trudy..allen@mail.test,trudy..allen@mail.test,email must not contain consecutive dots
+4833,field_failed,email,victor_allen@mail..test,victor_allen@mail..test,email must not contain consecutive dots
+4835,field_failed,email,+81-90-3060-1196,+81-90-3060-1196,email must contain exactly one @
+4835,field_failed,phone,leuwrhq-wcnrv3014@example.com,3014,phone number must have 7 to 15 digits
+4849,field_failed,CustomerID,,,CustomerID is required
+4875,field_failed,email,wendy.jacksondemo.local,wendy.jacksondemo.local,email must contain exactly one @
+4880,field_failed,email,walter..davis@example.net,walter..davis@example.net,email must not contain consecutive dots
+4886,field_failed,email,bob.smithexample.org,bob.smithexample.org,email must contain exactly one @
+4899,field_failed,status,??,??,unsupported status value
+4901,field_failed,email,exlewyz..hvykn@demo.local,exlewyz..hvykn@demo.local,email must not contain consecutive dots
+4966,field_failed,email,heidi..davis@mail.test,heidi..davis@mail.test,email must not contain consecutive dots
+4985,field_failed,email,heidi..thompson@example.com,heidi..thompson@example.com,email must not contain consecutive dots
+5016,field_failed,email,dnmtv..oknwibw@example.org,dnmtv..oknwibw@example.org,email must not contain consecutive dots

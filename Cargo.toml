@@ -1,0 +1,10 @@
+[workspace]
+members = [
+  "decision-engine",
+  "desktop-ui",
+  "customers-etl",
+  "commerce-etl",
+  "purchase-insights",
+  "app-api",
+]
+resolver = "2"
