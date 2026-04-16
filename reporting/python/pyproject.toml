@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "decision-report"
+version = "0.1.0"
+description = "Decision Pack 向けのレポート描画ツール"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["matplotlib>=3.8"]
+
+[project.scripts]
+decision-report = "decision_report.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://decision-pack.local/schemas/simulation_report_v0.1.schema.json",
+  "title": "Decision Pack Simulation Report v0.1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at",
+    "scenario",
+    "horizon_days",
+    "currency",
+    "kpi",
+    "alerts",
+    "cash_series",
+    "inventory_series"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "v0.1"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "horizon_days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "currency": {
+      "type": "string",
+      "const": "JPY"
+    },
+    "kpi": {
+      "type": "object",
+      "required": [
+        "min_cash",
+        "first_cash_shortfall_date",
+        "total_stockout_qty",
+        "stockout_rate",
+        "days_on_hand_avg"
+      ],
+      "properties": {
+        "min_cash": { "type": "integer" },
+        "first_cash_shortfall_date": {
+          "type": ["string", "null"],
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "total_stockout_qty": { "type": "integer", "minimum": 0 },
+        "stockout_rate": { "type": "number", "minimum": 0.0, "maximum": 1.0 },
+        "days_on_hand_avg": { "type": "number", "minimum": 0.0 }
+      },
+      "additionalProperties": false
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["code", "severity", "date", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "cash_threshold_breach",
+              "cash_shortfall",
+              "stockout_rate_breach",
+              "order_budget_breach"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warn", "critical"]
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "item_id": { "type": ["string", "null"] },
+          "message": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "cash_series": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["date", "cash", "inflow", "outflow"],
+        "properties": {
+          "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "cash": { "type": "integer" },
+          "inflow": { "type": "integer", "minimum": 0 },
+          "outflow": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "inventory_series": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "date",
+          "item_id",
+          "on_hand",
+          "on_order",
+          "demand",
+          "sold",
+          "stockout"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "item_id": { "type": "string", "minLength": 1 },
+          "on_hand": { "type": "integer", "minimum": 0 },
+          "on_order": { "type": "integer", "minimum": 0 },
+          "demand": { "type": "integer", "minimum": 0 },
+          "sold": { "type": "integer", "minimum": 0 },
+          "stockout": { "type": "integer", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

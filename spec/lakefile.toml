@@ -1,0 +1,6 @@
+name = "spec"
+version = "0.1.0"
+defaultTargets = ["DecisionSpec"]
+
+[[lean_lib]]
+name = "DecisionSpec"

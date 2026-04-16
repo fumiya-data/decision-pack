@@ -1,0 +1,37 @@
+name: Engine CI
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: cargo test --all-targets
+
+      - name: Build sample report JSON
+        run: cargo run --quiet
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install jsonschema
+        run: python -m pip install --upgrade pip jsonschema
+
+      - name: Validate report JSON against schema
+        run: |
+          python scripts/validate_report_schema.py \
+            --schema schemas/simulation_report_v0.1.schema.json \
+            --input out/simulation_report_v0.1.json
