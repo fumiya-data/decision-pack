@@ -48,9 +48,25 @@
   - 命名規則と文書配置ルール
 - `decisions/adr-0002-module-boundaries.md`
   - モジュール境界の固定方針
+- `decisions/adr-0003-postgresql-migration-strategy.md`
+  - PostgreSQL の migration 方式
+- `decisions/adr-0004-app-api-technology-stack.md`
+  - `app-api` の実装技術
+- `decisions/adr-0005-decision-engine-report-json-boundary.md`
+  - GUI と reporting が依存するレポート JSON 境界
+- `decisions/adr-0006-replenishment-constraints-in-decision-engine.md`
+  - MOQ と lot size の適用位置
+- `decisions/adr-0007-multi-source-ingestion-via-adapters-and-staging.md`
+  - 複数データソース統合取込の基本方式
 
 ## 6. 記録
 
+- `progress/2026-04-17-2102-specs-expanded.md`
+  - `docs/specs/` の仕様書詳細化
+- `progress/2026-04-17-2045-no-orm-policy.md`
+  - ORM 非採用と手書き SQL 方針の明文化
+- `progress/2026-04-17-2038-backlog-decisions.md`
+  - 未決事項 9 件の初回判断と ADR 反映
 - `progress/2026-04-16-1903-structure-and-spec-update.md`
   - 2026-04-16 19:03 時点のディレクトリ再構築と Lean 仕様更新
 - `progress/2026-04-14-1215-current-status.md`

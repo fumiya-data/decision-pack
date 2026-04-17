@@ -20,6 +20,9 @@ decision-pack/
     progress/
     backlog/
     archive/
+  db/
+    migrations/
+    seeds/
   customers-etl/
   commerce-etl/
   purchase-insights/
@@ -47,3 +50,4 @@ decision-pack/
 - `desktop-ui`: GUI
 - `reporting`: 図表生成
 - `spec`: 形式仕様
+- `db`: PostgreSQL の migration と seed 管理
