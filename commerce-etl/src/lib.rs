@@ -1,3 +1,5 @@
-//! 商品、受注、在庫データの取込を担う将来モジュールです。
-//!
-//! 現時点ではディレクトリ構造と workspace 境界を固定するための雛形だけを置きます。
+//! 商品、受注、在庫データの取込ライブラリです。
+
+pub mod config;
+pub mod csv_input;
+pub mod persistence;

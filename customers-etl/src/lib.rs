@@ -11,6 +11,7 @@ pub mod config;
 pub mod csv_input;
 pub mod formatter;
 pub mod output;
+pub mod persistence;
 pub mod report;
 pub mod schema;
 pub mod summary;

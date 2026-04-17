@@ -61,6 +61,10 @@
 
 ## 6. 記録
 
+- `progress/2026-04-17-2137-phase-1-implementation-complete.md`
+  - ETL、需要予測、シミュレーション、API、GUI の実装フェーズ1完了
+- `progress/2026-04-17-2112-initial-implementation-started.md`
+  - `db/migrations` と `app-api` の初期実装着手
 - `progress/2026-04-17-2102-specs-expanded.md`
   - `docs/specs/` の仕様書詳細化
 - `progress/2026-04-17-2045-no-orm-policy.md`

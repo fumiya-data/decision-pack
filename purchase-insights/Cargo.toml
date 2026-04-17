@@ -3,5 +3,8 @@ name = "purchase-insights"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-path = "src/lib.rs"
+[dependencies]
+chrono = { version = "0.4", features = ["clock"] }
+serde = { version = "1", features = ["derive"] }
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio-rustls", "chrono"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

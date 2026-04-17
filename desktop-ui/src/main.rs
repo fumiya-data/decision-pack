@@ -1,34 +1,234 @@
-use iced::widget::{button, column, container, progress_bar, row, scrollable, text, text_input};
+use iced::widget::{button, column, container, row, scrollable, text, text_input};
 use iced::{Element, Length, Task, Theme};
-use serde::Deserialize;
+use reqwest::blocking::Client;
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::collections::BTreeMap;
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::process::Command;
 
 fn main() -> iced::Result {
-    iced::application("Decision Pack UI（Iced）", update, view)
+    iced::application("Decision Pack UI", update, view)
         .theme(|_| Theme::TokyoNight)
-        .run_with(|| (App::default(), Task::none()))
+        .run_with(|| {
+            let app = App::default();
+            let base = app.api_base_url.clone();
+            (
+                app,
+                Task::batch(vec![
+                    load_customers_task(base.clone()),
+                    load_items_task(base.clone(), String::new()),
+                    load_simulations_task(base),
+                ]),
+            )
+        })
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+enum Tab {
+    #[default]
+    Customers,
+    Inventory,
+    Simulations,
+}
+
+#[derive(Debug)]
 struct App {
-    input_path: String,
+    api_base_url: String,
     status: String,
-    report: Option<Report>,
-    loaded_json_path: Option<PathBuf>,
+    active_tab: Tab,
+    customer_query: String,
+    customers: Vec<CustomerSummary>,
+    selected_customer_id: Option<String>,
+    customer_detail: Option<CustomerDetail>,
+    customer_purchases: Vec<CustomerPurchase>,
+    customer_next_buy: Vec<CustomerNextBuy>,
+    item_query: String,
+    items: Vec<ItemSummary>,
+    selected_item_id: Option<String>,
+    item_detail: Option<ItemDetail>,
+    item_inventory: Option<ItemInventory>,
+    item_risk: Option<ItemRisk>,
+    simulations: Vec<SimulationSummary>,
+    selected_run_id: Option<String>,
+    simulation_detail: Option<SimulationDetail>,
+    simulation_report: Option<SimulationReport>,
+    is_loading: bool,
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            api_base_url: "http://127.0.0.1:8080".to_string(),
+            status: "API から初期データを読み込みます。".to_string(),
+            active_tab: Tab::Customers,
+            customer_query: String::new(),
+            customers: Vec::new(),
+            selected_customer_id: None,
+            customer_detail: None,
+            customer_purchases: Vec::new(),
+            customer_next_buy: Vec::new(),
+            item_query: String::new(),
+            items: Vec::new(),
+            selected_item_id: None,
+            item_detail: None,
+            item_inventory: None,
+            item_risk: None,
+            simulations: Vec::new(),
+            selected_run_id: None,
+            simulation_detail: None,
+            simulation_report: None,
+            is_loading: false,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 enum Message {
-    InputChanged(String),
-    BrowsePressed,
-    LoadPressed,
-    OpenCashChart,
-    OpenStockoutChart,
-    OpenSummary,
-    GenerateReportArtifacts,
+    ApiBaseUrlChanged(String),
+    SwitchTab(Tab),
+    CustomerQueryChanged(String),
+    RefreshCustomers,
+    CustomersLoaded(Result<Vec<CustomerSummary>, String>),
+    SelectCustomer(String),
+    CustomerBundleLoaded(Result<CustomerBundle, String>),
+    ItemQueryChanged(String),
+    RefreshItems,
+    ItemsLoaded(Result<Vec<ItemSummary>, String>),
+    SelectItem(String),
+    ItemBundleLoaded(Result<ItemBundle, String>),
+    RefreshSimulations,
+    SimulationsLoaded(Result<Vec<SimulationSummary>, String>),
+    SelectSimulation(String),
+    SimulationBundleLoaded(Result<SimulationBundle, String>),
+    RunSimulation,
+    SimulationCreated(Result<SimulationDetail, String>),
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CustomerSummary {
+    customer_id: String,
+    full_name: String,
+    email: Option<String>,
+    status: Option<String>,
+    tier: Option<String>,
+    country: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CustomerDetail {
+    customer_id: String,
+    full_name: String,
+    email: Option<String>,
+    phone: Option<String>,
+    city: Option<String>,
+    region: Option<String>,
+    country: Option<String>,
+    status: Option<String>,
+    tier: Option<String>,
+    preferred_language: Option<String>,
+    marketing_opt_in: Option<bool>,
+    total_spend: Option<f64>,
+    order_count: Option<i32>,
+    last_purchase_date: Option<String>,
+    notes: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CustomerPurchase {
+    order_id: String,
+    ordered_at: String,
+    order_status: String,
+    item_id: String,
+    item_name: String,
+    quantity: i32,
+    unit_price: Option<f64>,
+    line_amount: Option<f64>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CustomerNextBuy {
+    item_id: String,
+    item_name: String,
+    score: f64,
+    rank: i32,
+    as_of: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ItemSummary {
+    item_id: String,
+    item_name: String,
+    category: String,
+    is_active: bool,
+    on_hand: Option<i32>,
+    on_order: Option<i32>,
+    reserved_qty: Option<i32>,
+    updated_at: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ItemDetail {
+    item_id: String,
+    item_name: String,
+    category: String,
+    uom: Option<String>,
+    is_active: bool,
+    lead_time_days: i32,
+    moq: Option<i32>,
+    lot_size: Option<i32>,
+    updated_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ItemInventory {
+    item_id: String,
+    on_hand: i32,
+    on_order: i32,
+    reserved_qty: i32,
+    updated_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ItemRisk {
+    run_id: String,
+    scenario_id: String,
+    scenario_name: String,
+    risk_level: Option<String>,
+    recommended_reorder_qty: Option<i32>,
+    expected_stockout_qty: Option<i32>,
+    expected_days_on_hand: Option<f64>,
+    requested_at: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SimulationSummary {
+    run_id: String,
+    scenario_id: String,
+    scenario_name: String,
+    status: String,
+    requested_at: String,
+    completed_at: Option<String>,
+    report_schema_version: Option<String>,
+    report_uri: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SimulationDetail {
+    run_id: String,
+    scenario_id: String,
+    scenario_name: String,
+    status: String,
+    requested_at: String,
+    started_at: Option<String>,
+    completed_at: Option<String>,
+    report_schema_version: Option<String>,
+    report_uri: Option<String>,
+    report_available: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct SimulationReportEnvelope {
+    #[allow(dead_code)]
+    run_id: String,
+    report: SimulationReport,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -41,6 +241,7 @@ struct Kpi {
     min_cash: i64,
     total_stockout_qty: u32,
     stockout_rate: f64,
+    days_on_hand_avg: f64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -53,8 +254,7 @@ struct Alert {
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct Report {
-    #[allow(dead_code)]
+struct SimulationReport {
     schema_version: Option<String>,
     generated_at: String,
     scenario: Scenario,
@@ -79,443 +279,832 @@ struct CashPoint {
 struct InventoryPoint {
     date: String,
     item_id: String,
+    on_hand: u32,
+    on_order: u32,
     demand: u32,
     sold: u32,
     stockout: u32,
 }
 
+#[derive(Debug, Clone)]
+struct CustomerBundle {
+    detail: CustomerDetail,
+    purchases: Vec<CustomerPurchase>,
+    next_buy: Vec<CustomerNextBuy>,
+}
+
+#[derive(Debug, Clone)]
+struct ItemBundle {
+    detail: ItemDetail,
+    inventory: ItemInventory,
+    risk: Option<ItemRisk>,
+}
+
+#[derive(Debug, Clone)]
+struct SimulationBundle {
+    detail: SimulationDetail,
+    report: Option<SimulationReport>,
+}
+
+#[derive(Debug, Serialize)]
+struct CreateSimulationRequest {
+    scenario_id: String,
+    scenario_name: String,
+    scenario_description: String,
+    horizon_days: u32,
+    initial_cash: i64,
+    currency: String,
+}
+
 fn update(app: &mut App, message: Message) -> Task<Message> {
     match message {
-        Message::InputChanged(v) => {
-            app.input_path = v;
+        Message::ApiBaseUrlChanged(value) => {
+            app.api_base_url = value;
+            Task::none()
         }
-        Message::BrowsePressed => {
-            if let Some(path) = rfd::FileDialog::new()
-                .add_filter("JSON", &["json"])
-                .pick_file()
-            {
-                app.input_path = path.to_string_lossy().to_string();
-                app.status = "入力パスを選択しました。".to_string();
-            } else {
-                app.status = "ファイル選択をキャンセルしました。".to_string();
-            }
+        Message::SwitchTab(tab) => {
+            app.active_tab = tab;
+            Task::none()
         }
-        Message::LoadPressed => {
-            let normalized = normalize_input_path(&app.input_path);
-            let path = PathBuf::from(&normalized);
-            if normalized.is_empty() || path.as_os_str().is_empty() {
-                app.status = "エラー: 入力 JSON パスが空です。".to_string();
-                return Task::none();
-            }
-            if !path.exists() {
-                app.status = format!("エラー: ファイルが見つかりません: {}", path.display());
-                return Task::none();
-            }
-            match fs::read_to_string(&path) {
-                Ok(raw) => match serde_json::from_str::<Report>(&raw) {
-                    Ok(r) => {
-                        app.report = Some(r);
-                        app.loaded_json_path = Some(path.clone());
-                        app.status = format!("レポート JSON を読み込みました: {}", path.display());
-                    }
-                    Err(e) => {
-                        app.status =
-                            format!("エラー: JSON の解析に失敗しました: {}: {e}", path.display());
-                    }
-                },
-                Err(e) => {
-                    app.status = format!(
-                        "エラー: ファイルを読めませんでした: {}: {e}",
-                        path.display()
-                    );
+        Message::CustomerQueryChanged(value) => {
+            app.customer_query = value;
+            Task::none()
+        }
+        Message::RefreshCustomers => {
+            app.is_loading = true;
+            app.status = "顧客一覧を読み込みます。".to_string();
+            load_customers_task(app.api_base_url.clone())
+        }
+        Message::CustomersLoaded(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(customers) => {
+                    app.status = format!("顧客一覧を {} 件読み込みました。", customers.len());
+                    app.customers = customers;
                 }
+                Err(error) => app.status = error,
             }
+            Task::none()
         }
-        Message::OpenCashChart => {
-            app.status = open_artifact(app, "cash_balance.png");
+        Message::SelectCustomer(customer_id) => {
+            app.selected_customer_id = Some(customer_id.clone());
+            app.is_loading = true;
+            app.status = format!("顧客 {} の詳細を読み込みます。", customer_id);
+            load_customer_bundle_task(app.api_base_url.clone(), customer_id)
         }
-        Message::OpenStockoutChart => {
-            app.status = open_artifact(app, "daily_stockout.png");
+        Message::CustomerBundleLoaded(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(bundle) => {
+                    app.status =
+                        format!("顧客 {} の詳細を更新しました。", bundle.detail.customer_id);
+                    app.customer_detail = Some(bundle.detail);
+                    app.customer_purchases = bundle.purchases;
+                    app.customer_next_buy = bundle.next_buy;
+                }
+                Err(error) => app.status = error,
+            }
+            Task::none()
         }
-        Message::OpenSummary => {
-            app.status = open_artifact(app, "summary.txt");
+        Message::ItemQueryChanged(value) => {
+            app.item_query = value;
+            Task::none()
         }
-        Message::GenerateReportArtifacts => {
-            app.status = generate_report_artifacts(app);
+        Message::RefreshItems => {
+            app.is_loading = true;
+            app.status = "在庫一覧を読み込みます。".to_string();
+            load_items_task(app.api_base_url.clone(), app.item_query.clone())
         }
-    }
-    Task::none()
-}
-
-fn open_artifact(app: &App, filename: &str) -> String {
-    let Some(json_path) = &app.loaded_json_path else {
-        return "エラー: 先に JSON を読み込んでください。".to_string();
-    };
-    let Some(base_dir) = json_path.parent() else {
-        return "エラー: JSON パスが不正です。".to_string();
-    };
-    let artifact = base_dir.join(filename);
-    if !artifact.exists() {
-        return format!("エラー: 成果物が見つかりません: {}", artifact.display());
-    }
-    match open_with_system(&artifact) {
-        Ok(()) => format!("成果物を開きました: {}", artifact.display()),
-        Err(e) => format!("エラー: 成果物を開けませんでした: {e}"),
-    }
-}
-
-fn open_with_system(path: &Path) -> Result<(), String> {
-    #[cfg(target_os = "windows")]
-    {
-        Command::new("cmd")
-            .args(["/C", "start", "", &path.to_string_lossy()])
-            .spawn()
-            .map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-    #[cfg(target_os = "macos")]
-    {
-        Command::new("open")
-            .arg(path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-    #[cfg(target_os = "linux")]
-    {
-        Command::new("xdg-open")
-            .arg(path)
-            .spawn()
-            .map_err(|e| e.to_string())?;
-        return Ok(());
-    }
-    #[allow(unreachable_code)]
-    Err("未対応の OS です".to_string())
-}
-
-fn generate_report_artifacts(app: &App) -> String {
-    let Some(json_path) = &app.loaded_json_path else {
-        return "エラー: 先に JSON を読み込んでください。".to_string();
-    };
-    let Some(out_dir) = json_path.parent() else {
-        return "エラー: JSON パスが不正です。".to_string();
-    };
-
-    let ui_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let Some(project_root) = ui_dir.parent() else {
-        return "エラー: プロジェクトルートを解決できません。".to_string();
-    };
-    let reporting_python = project_root.join("reporting").join("python");
-    if !reporting_python.exists() {
-        return format!(
-            "エラー: reporting/python が見つかりません: {}",
-            reporting_python.display()
-        );
-    }
-
-    let status = Command::new("uv")
-        .current_dir(&reporting_python)
-        .args([
-            "run",
-            "decision-report",
-            "--input",
-            &json_path.to_string_lossy(),
-            "--out-dir",
-            &out_dir.to_string_lossy(),
-        ])
-        .status();
-
-    match status {
-        Ok(s) if s.success() => format!("レポート成果物を生成しました: {}", out_dir.display()),
-        Ok(s) => format!(
-            "エラー: レポート生成が失敗しました。終了コード: {:?}",
-            s.code()
-        ),
-        Err(e) => format!("エラー: uv の実行に失敗しました: {e}"),
+        Message::ItemsLoaded(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(items) => {
+                    app.status = format!("品目一覧を {} 件読み込みました。", items.len());
+                    app.items = items;
+                }
+                Err(error) => app.status = error,
+            }
+            Task::none()
+        }
+        Message::SelectItem(item_id) => {
+            app.selected_item_id = Some(item_id.clone());
+            app.is_loading = true;
+            app.status = format!("品目 {} の詳細を読み込みます。", item_id);
+            load_item_bundle_task(app.api_base_url.clone(), item_id)
+        }
+        Message::ItemBundleLoaded(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(bundle) => {
+                    app.status = format!("品目 {} の詳細を更新しました。", bundle.detail.item_id);
+                    app.item_detail = Some(bundle.detail);
+                    app.item_inventory = Some(bundle.inventory);
+                    app.item_risk = bundle.risk;
+                }
+                Err(error) => app.status = error,
+            }
+            Task::none()
+        }
+        Message::RefreshSimulations => {
+            app.is_loading = true;
+            app.status = "シミュレーション一覧を読み込みます。".to_string();
+            load_simulations_task(app.api_base_url.clone())
+        }
+        Message::SimulationsLoaded(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(simulations) => {
+                    app.status = format!(
+                        "シミュレーション一覧を {} 件読み込みました。",
+                        simulations.len()
+                    );
+                    app.simulations = simulations;
+                }
+                Err(error) => app.status = error,
+            }
+            Task::none()
+        }
+        Message::SelectSimulation(run_id) => {
+            app.selected_run_id = Some(run_id.clone());
+            app.is_loading = true;
+            app.status = format!("シミュレーション {} を読み込みます。", run_id);
+            load_simulation_bundle_task(app.api_base_url.clone(), run_id)
+        }
+        Message::SimulationBundleLoaded(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(bundle) => {
+                    app.status =
+                        format!("シミュレーション {} を更新しました。", bundle.detail.run_id);
+                    app.simulation_detail = Some(bundle.detail);
+                    app.simulation_report = bundle.report;
+                }
+                Err(error) => app.status = error,
+            }
+            Task::none()
+        }
+        Message::RunSimulation => {
+            app.is_loading = true;
+            app.status = "シミュレーションを起動します。".to_string();
+            create_simulation_task(app.api_base_url.clone())
+        }
+        Message::SimulationCreated(result) => {
+            app.is_loading = false;
+            match result {
+                Ok(detail) => {
+                    let run_id = detail.run_id.clone();
+                    app.status = format!("シミュレーション {} を実行しました。", run_id);
+                    app.selected_run_id = Some(run_id.clone());
+                    return Task::batch(vec![
+                        load_simulations_task(app.api_base_url.clone()),
+                        load_simulation_bundle_task(app.api_base_url.clone(), run_id),
+                    ]);
+                }
+                Err(error) => app.status = error,
+            }
+            Task::none()
+        }
     }
 }
 
 fn view(app: &App) -> Element<'_, Message> {
-    let top_row = row![
-        text_input("入力 JSON パス", &app.input_path)
-            .on_input(Message::InputChanged)
+    let controls = row![
+        text("API"),
+        text_input("http://127.0.0.1:8080", &app.api_base_url)
+            .on_input(Message::ApiBaseUrlChanged)
             .padding(8)
-            .width(Length::Fill),
-        button("参照").on_press(Message::BrowsePressed),
-        button("読込").on_press(Message::LoadPressed),
+            .width(Length::FillPortion(3)),
+        button("顧客再読込").on_press(Message::RefreshCustomers),
+        button("在庫再読込").on_press(Message::RefreshItems),
+        button("シミュレーション再読込").on_press(Message::RefreshSimulations),
     ]
     .spacing(8);
 
-    let (
-        scenario_name,
-        generated_at,
-        min_cash,
-        total_stockout,
-        stockout_rate,
-        alerts,
-        cash_series,
-        inventory_series,
-    ) = if let Some(r) = &app.report {
-        (
-            r.scenario.name.clone(),
-            r.generated_at.clone(),
-            format!("{} 円", with_commas(r.kpi.min_cash)),
-            r.kpi.total_stockout_qty.to_string(),
-            format!("{:.2}%", r.kpi.stockout_rate * 100.0),
-            r.alerts.clone(),
-            r.cash_series.clone(),
-            r.inventory_series.clone(),
-        )
+    let tabs = row![
+        tab_button("顧客", Tab::Customers, app.active_tab),
+        tab_button("在庫", Tab::Inventory, app.active_tab),
+        tab_button("シミュレーション", Tab::Simulations, app.active_tab),
+    ]
+    .spacing(8);
+
+    let status = if app.is_loading {
+        format!("状態: {}（処理中）", app.status)
     } else {
-        (
-            "未読込".to_string(),
-            "未読込".to_string(),
-            "未読込".to_string(),
-            "未読込".to_string(),
-            "未読込".to_string(),
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-        )
+        format!("状態: {}", app.status)
     };
 
-    let header = row![
-        text(format!("シナリオ: {scenario_name}")),
-        text(format!("生成時刻: {generated_at}")),
-    ]
-    .spacing(20);
+    let content = match app.active_tab {
+        Tab::Customers => customers_view(app),
+        Tab::Inventory => inventory_view(app),
+        Tab::Simulations => simulations_view(app),
+    };
 
-    let kpi_row = row![
-        kpi_card("最小資金残高", min_cash),
-        kpi_card("総欠品数量", total_stockout),
-        kpi_card("欠品率", stockout_rate),
-    ]
-    .spacing(10);
+    container(
+        column![controls, tabs, content, text(status)]
+            .spacing(12)
+            .padding(16),
+    )
+    .width(Length::Fill)
+    .height(Length::Fill)
+    .into()
+}
 
-    let mut alert_col = column![text(format!("アラート ({})", alerts.len()))].spacing(6);
-    if alerts.is_empty() {
-        alert_col = alert_col.push(text("- （なし）"));
+fn customers_view(app: &App) -> Element<'_, Message> {
+    let filter = app.customer_query.trim().to_lowercase();
+    let customers = app
+        .customers
+        .iter()
+        .filter(|customer| {
+            filter.is_empty()
+                || customer.customer_id.to_lowercase().contains(&filter)
+                || customer.full_name.to_lowercase().contains(&filter)
+                || customer
+                    .email
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_lowercase()
+                    .contains(&filter)
+        })
+        .collect::<Vec<_>>();
+
+    let mut list = column![
+        text_input("顧客フィルタ", &app.customer_query)
+            .on_input(Message::CustomerQueryChanged)
+            .padding(8)
+    ]
+    .spacing(8);
+    for customer in customers {
+        let label = format!(
+            "{} | {} | {} | {} | {}",
+            customer.customer_id,
+            customer.full_name,
+            customer.status.as_deref().unwrap_or("-"),
+            customer.tier.as_deref().unwrap_or("-"),
+            customer.country.as_deref().unwrap_or("-")
+        );
+        list = list.push(
+            button(text(label))
+                .width(Length::Fill)
+                .on_press(Message::SelectCustomer(customer.customer_id.clone())),
+        );
+    }
+
+    let detail = customer_detail_panel(app);
+    row![
+        container(scrollable(list)).width(Length::FillPortion(2)),
+        container(detail).width(Length::FillPortion(3)),
+    ]
+    .spacing(12)
+    .into()
+}
+
+fn customer_detail_panel(app: &App) -> Element<'_, Message> {
+    let Some(detail) = &app.customer_detail else {
+        return container(text("顧客を選択してください。"))
+            .width(Length::Fill)
+            .into();
+    };
+
+    let mut purchases = column![text("購入履歴")].spacing(4);
+    if app.customer_purchases.is_empty() {
+        purchases = purchases.push(text("- 購入履歴なし"));
     } else {
-        for a in alerts.iter().take(10) {
-            let item = a.item_id.as_deref().unwrap_or("-");
-            alert_col = alert_col.push(text(format!(
-                "- [{}] {} {} ({}) {}",
-                a.severity.to_uppercase(),
-                a.date,
-                a.code,
-                item,
-                a.message
+        for row in app.customer_purchases.iter().take(12) {
+            purchases = purchases.push(text(format!(
+                "{} | {} | {} ({}) x{} | unit={} | line={} | {}",
+                row.ordered_at,
+                row.order_id,
+                row.item_name,
+                row.item_id,
+                row.quantity,
+                money_opt(row.unit_price),
+                money_opt(row.line_amount),
+                row.order_status
             )));
         }
     }
 
-    let artifacts = row![
-        button("レポート成果物を生成").on_press(Message::GenerateReportArtifacts),
-        button("cash_balance.png を開く").on_press(Message::OpenCashChart),
-        button("daily_stockout.png を開く").on_press(Message::OpenStockoutChart),
-        button("summary.txt を開く").on_press(Message::OpenSummary),
+    let mut next_buy = column![text("次回購入候補")].spacing(4);
+    if app.customer_next_buy.is_empty() {
+        next_buy = next_buy.push(text("- 候補なし"));
+    } else {
+        for row in app.customer_next_buy.iter().take(10) {
+            next_buy = next_buy.push(text(format!(
+                "#{} {} ({}) score={:.3} as_of={}",
+                row.rank, row.item_name, row.item_id, row.score, row.as_of
+            )));
+        }
+    }
+
+    scrollable(
+        column![
+            text(format!("{} / {}", detail.customer_id, detail.full_name)),
+            text(format!(
+                "状態={} | tier={} | 国={}",
+                detail.status.as_deref().unwrap_or("-"),
+                detail.tier.as_deref().unwrap_or("-"),
+                detail.country.as_deref().unwrap_or("-")
+            )),
+            text(format!(
+                "言語={} | 連絡先={} | マーケ可={}",
+                detail.preferred_language.as_deref().unwrap_or("-"),
+                detail.email.as_deref().unwrap_or("-"),
+                yes_no(detail.marketing_opt_in)
+            )),
+            text(format!(
+                "累計売上={} | 注文回数={} | 最終購入={}",
+                money_opt(detail.total_spend),
+                detail.order_count.unwrap_or_default(),
+                detail.last_purchase_date.as_deref().unwrap_or("-")
+            )),
+            text(format!(
+                "地域={} / {} | 電話={}",
+                detail.region.as_deref().unwrap_or("-"),
+                detail.city.as_deref().unwrap_or("-"),
+                detail.phone.as_deref().unwrap_or("-")
+            )),
+            text(format!("備考={}", detail.notes.as_deref().unwrap_or("-"))),
+            purchases,
+            next_buy,
+        ]
+        .spacing(8),
+    )
+    .into()
+}
+
+fn inventory_view(app: &App) -> Element<'_, Message> {
+    let list_header = row![
+        text_input("品目検索", &app.item_query)
+            .on_input(Message::ItemQueryChanged)
+            .padding(8)
+            .width(Length::Fill),
+        button("検索").on_press(Message::RefreshItems),
     ]
     .spacing(8);
 
-    let metrics = summarize_metrics(&cash_series, &inventory_series);
-    let metrics_box = container(
-        column![
-            text("計算済みサマリ"),
-            text(format!(
-                "- 純資金増減: {} 円",
-                with_commas(metrics.net_cash_change)
-            )),
-            text(format!(
-                "- 総入金 / 総出金: {} / {} 円",
-                with_commas(metrics.total_inflow),
-                with_commas(metrics.total_outflow)
-            )),
-            text(format!(
-                "- 需要 / 販売 / 欠品: {} / {} / {}",
-                metrics.total_demand, metrics.total_sold, metrics.total_stockout
-            )),
-            text(format!(
-                "- 再計算した欠品率: {:.2}%",
-                metrics.stockout_rate * 100.0
-            )),
-            text(format!(
-                "- 欠品が最も多い品目: {} ({})",
-                metrics.top_stockout_item, metrics.top_stockout_qty
-            )),
-        ]
-        .spacing(4),
-    )
-    .padding(10);
+    let mut list = column![list_header].spacing(8);
+    for item in &app.items {
+        list = list.push(
+            button(text(format!(
+                "{} | {} | {} | active={} | on_hand={} | on_order={} | reserved={} | {}",
+                item.item_id,
+                item.item_name,
+                item.category,
+                yes_no(Some(item.is_active)),
+                item.on_hand.unwrap_or_default(),
+                item.on_order.unwrap_or_default(),
+                item.reserved_qty.unwrap_or_default(),
+                item.updated_at.as_deref().unwrap_or("-")
+            )))
+            .width(Length::Fill)
+            .on_press(Message::SelectItem(item.item_id.clone())),
+        );
+    }
 
-    let cash_view = cash_series_view(&cash_series);
-    let stockout_view = daily_stockout_view(&inventory_series);
-
-    let content = column![
-        top_row,
-        header,
-        kpi_row,
-        metrics_box,
-        text("資金推移"),
-        scrollable(cash_view).height(Length::Fixed(180.0)),
-        text("日次欠品"),
-        scrollable(stockout_view)
-            .height(Length::Fixed(160.0))
-            .width(Length::Fill),
-        scrollable(alert_col).height(Length::Fixed(160.0)),
-        artifacts,
-        text(format!("状態: {}", status_text(app))),
+    let detail = item_detail_panel(app);
+    row![
+        container(scrollable(list)).width(Length::FillPortion(2)),
+        container(detail).width(Length::FillPortion(3)),
     ]
     .spacing(12)
-    .padding(16);
+    .into()
+}
 
-    container(content)
-        .width(Length::Fill)
-        .height(Length::Fill)
+fn item_detail_panel(app: &App) -> Element<'_, Message> {
+    let Some(detail) = &app.item_detail else {
+        return container(text("品目を選択してください。"))
+            .width(Length::Fill)
+            .into();
+    };
+    let inventory = app.item_inventory.as_ref();
+    let risk = app.item_risk.as_ref();
+
+    container(
+        column![
+            text(format!("{} / {}", detail.item_id, detail.item_name)),
+            text(format!(
+                "カテゴリ={} | active={} | UOM={}",
+                detail.category,
+                yes_no(Some(detail.is_active)),
+                detail.uom.as_deref().unwrap_or("-")
+            )),
+            text(format!(
+                "lead_time={}日 | moq={} | lot_size={}",
+                detail.lead_time_days,
+                detail.moq.unwrap_or_default(),
+                detail.lot_size.unwrap_or_default()
+            )),
+            text(format!(
+                "在庫={} | 発注残={} | 引当={} | 更新={} | inventory_item={}",
+                inventory.map(|row| row.on_hand).unwrap_or_default(),
+                inventory.map(|row| row.on_order).unwrap_or_default(),
+                inventory.map(|row| row.reserved_qty).unwrap_or_default(),
+                inventory
+                    .map(|row| row.updated_at.as_str())
+                    .unwrap_or(detail.updated_at.as_str()),
+                inventory
+                    .map(|row| row.item_id.as_str())
+                    .unwrap_or(detail.item_id.as_str())
+            )),
+            text(format!(
+                "最新リスク={} | 推奨補充={} | 想定欠品={} | 平均在庫日数={}",
+                risk.and_then(|row| row.risk_level.as_deref())
+                    .unwrap_or("未計算"),
+                risk.and_then(|row| row.recommended_reorder_qty)
+                    .unwrap_or_default(),
+                risk.and_then(|row| row.expected_stockout_qty)
+                    .unwrap_or_default(),
+                risk.and_then(|row| row.expected_days_on_hand)
+                    .map(|value| format!("{value:.1}"))
+                    .unwrap_or_else(|| "-".to_string())
+            )),
+            if let Some(risk) = risk {
+                text(format!(
+                    "参照 run={} / scenario={} ({}) / requested_at={}",
+                    risk.run_id, risk.scenario_name, risk.scenario_id, risk.requested_at
+                ))
+            } else {
+                text("シミュレーション結果はまだありません。")
+            },
+        ]
+        .spacing(8),
+    )
+    .into()
+}
+
+fn simulations_view(app: &App) -> Element<'_, Message> {
+    let controls = row![
+        button("ベースライン実行").on_press(Message::RunSimulation),
+        button("一覧更新").on_press(Message::RefreshSimulations),
+    ]
+    .spacing(8);
+
+    let mut list = column![controls].spacing(8);
+    for simulation in &app.simulations {
+        list = list.push(
+            button(text(format!(
+                "{} | {} | {} | {} | {} | {} | {} | {}",
+                simulation.run_id,
+                simulation.scenario_name,
+                simulation.scenario_id,
+                simulation.status,
+                simulation.requested_at,
+                simulation.completed_at.as_deref().unwrap_or("-"),
+                simulation.report_schema_version.as_deref().unwrap_or("-"),
+                simulation.report_uri.as_deref().unwrap_or("-")
+            )))
+            .width(Length::Fill)
+            .on_press(Message::SelectSimulation(simulation.run_id.clone())),
+        );
+    }
+
+    let detail = simulation_detail_panel(app);
+    row![
+        container(scrollable(list)).width(Length::FillPortion(2)),
+        container(detail).width(Length::FillPortion(3)),
+    ]
+    .spacing(12)
+    .into()
+}
+
+fn simulation_detail_panel(app: &App) -> Element<'_, Message> {
+    let Some(detail) = &app.simulation_detail else {
+        return container(text("シミュレーションを選択してください。"))
+            .width(Length::Fill)
+            .into();
+    };
+
+    let report_summary = if let Some(report) = &app.simulation_report {
+        let top_stockout = top_stockout_items(&report.inventory_series);
+        column![
+            text(format!(
+                "schema={} | generated_at={}",
+                report.schema_version.as_deref().unwrap_or("-"),
+                report.generated_at
+            )),
+            text(format!(
+                "cash期間={}..{} | total_inflow={} | total_outflow={} | final_cash={}",
+                report
+                    .cash_series
+                    .first()
+                    .map(|row| row.date.as_str())
+                    .unwrap_or("-"),
+                report
+                    .cash_series
+                    .last()
+                    .map(|row| row.date.as_str())
+                    .unwrap_or("-"),
+                with_commas(report.cash_series.iter().map(|row| row.inflow).sum::<i64>()),
+                with_commas(report.cash_series.iter().map(|row| row.outflow).sum::<i64>()),
+                with_commas(report.cash_series.last().map(|row| row.cash).unwrap_or_default())
+            )),
+            text(format!(
+                "scenario={} | min_cash={} | total_stockout={} | stockout_rate={:.2}% | avg_days_on_hand={:.2}",
+                report.scenario.name,
+                with_commas(report.kpi.min_cash),
+                report.kpi.total_stockout_qty,
+                report.kpi.stockout_rate * 100.0,
+                report.kpi.days_on_hand_avg
+            )),
+            text(format!(
+                "cash points={} | inventory points={}",
+                report.cash_series.len(),
+                report.inventory_series.len()
+            )),
+            text(format!(
+                "inventory期間={}..{} | total_demand={} | total_sold={}",
+                report
+                    .inventory_series
+                    .first()
+                    .map(|row| row.date.as_str())
+                    .unwrap_or("-"),
+                report
+                    .inventory_series
+                    .last()
+                    .map(|row| row.date.as_str())
+                    .unwrap_or("-"),
+                report.inventory_series.iter().map(|row| row.demand).sum::<u32>(),
+                report.inventory_series.iter().map(|row| row.sold).sum::<u32>()
+            )),
+            text("主要アラート"),
+            alerts_view(&report.alerts),
+            text("欠品上位品目"),
+            top_stockout,
+        ]
+        .spacing(6)
+    } else {
+        column![text("レポート JSON はまだありません。")].spacing(6)
+    };
+
+    scrollable(
+        column![
+            text(format!("run={} / {}", detail.run_id, detail.scenario_name)),
+            text(format!(
+                "status={} | requested_at={} | report_available={}",
+                detail.status, detail.requested_at, detail.report_available
+            )),
+            text(format!(
+                "started_at={} | completed_at={}",
+                detail.started_at.as_deref().unwrap_or("-"),
+                detail.completed_at.as_deref().unwrap_or("-")
+            )),
+            text(format!(
+                "schema={} | report_uri={} | scenario_id={}",
+                detail.report_schema_version.as_deref().unwrap_or("-"),
+                detail.report_uri.as_deref().unwrap_or("-"),
+                detail.scenario_id
+            )),
+            report_summary,
+        ]
+        .spacing(8),
+    )
+    .into()
+}
+
+fn alerts_view(alerts: &[Alert]) -> iced::widget::Column<'_, Message> {
+    let mut col = column![].spacing(4);
+    if alerts.is_empty() {
+        return col.push(text("- アラートなし"));
+    }
+    for alert in alerts.iter().take(8) {
+        col = col.push(text(format!(
+            "{} | {} | {} | {} | {}",
+            alert.date,
+            alert.severity,
+            alert.code,
+            alert.item_id.as_deref().unwrap_or("-"),
+            alert.message
+        )));
+    }
+    col
+}
+
+fn top_stockout_items(rows: &[InventoryPoint]) -> iced::widget::Column<'_, Message> {
+    let mut by_item: BTreeMap<String, (u32, u32, u32)> = BTreeMap::new();
+    for row in rows {
+        let entry = by_item.entry(row.item_id.clone()).or_insert((0, 0, 0));
+        entry.0 += row.stockout;
+        entry.1 += row.on_hand;
+        entry.2 += row.on_order;
+    }
+
+    let mut ranked = by_item.into_iter().collect::<Vec<_>>();
+    ranked.sort_by(|a, b| b.1.0.cmp(&a.1.0).then(a.0.cmp(&b.0)));
+
+    let mut col = column![].spacing(4);
+    if ranked.is_empty() {
+        return col.push(text("- データなし"));
+    }
+    for (item_id, (stockout, on_hand, on_order)) in ranked.into_iter().take(8) {
+        col = col.push(text(format!(
+            "{} | stockout={} | on_hand_sum={} | on_order_sum={}",
+            item_id, stockout, on_hand, on_order
+        )));
+    }
+    col
+}
+
+fn tab_button<'a>(label: &'a str, tab: Tab, active: Tab) -> Element<'a, Message> {
+    let caption = if tab == active {
+        format!("[{}]", label)
+    } else {
+        label.to_string()
+    };
+    button(text(caption))
+        .on_press(Message::SwitchTab(tab))
         .into()
 }
 
-fn status_text(app: &App) -> &str {
-    if app.status.is_empty() {
-        "準備完了"
+fn load_customers_task(base: String) -> Task<Message> {
+    Task::perform(
+        async move { fetch_customers(&base) },
+        Message::CustomersLoaded,
+    )
+}
+
+fn load_customer_bundle_task(base: String, customer_id: String) -> Task<Message> {
+    Task::perform(
+        async move { fetch_customer_bundle(&base, &customer_id) },
+        Message::CustomerBundleLoaded,
+    )
+}
+
+fn load_items_task(base: String, query: String) -> Task<Message> {
+    Task::perform(
+        async move { fetch_items(&base, &query) },
+        Message::ItemsLoaded,
+    )
+}
+
+fn load_item_bundle_task(base: String, item_id: String) -> Task<Message> {
+    Task::perform(
+        async move { fetch_item_bundle(&base, &item_id) },
+        Message::ItemBundleLoaded,
+    )
+}
+
+fn load_simulations_task(base: String) -> Task<Message> {
+    Task::perform(
+        async move { fetch_simulations(&base) },
+        Message::SimulationsLoaded,
+    )
+}
+
+fn load_simulation_bundle_task(base: String, run_id: String) -> Task<Message> {
+    Task::perform(
+        async move { fetch_simulation_bundle(&base, &run_id) },
+        Message::SimulationBundleLoaded,
+    )
+}
+
+fn create_simulation_task(base: String) -> Task<Message> {
+    Task::perform(
+        async move { create_simulation(&base) },
+        Message::SimulationCreated,
+    )
+}
+
+fn fetch_customers(base: &str) -> Result<Vec<CustomerSummary>, String> {
+    get_json(&format!(
+        "{}/api/v1/customers?limit=100",
+        normalize_base(base)
+    ))
+}
+
+fn fetch_customer_bundle(base: &str, customer_id: &str) -> Result<CustomerBundle, String> {
+    let base = normalize_base(base);
+    Ok(CustomerBundle {
+        detail: get_json(&format!("{base}/api/v1/customers/{customer_id}"))?,
+        purchases: get_json(&format!(
+            "{base}/api/v1/customers/{customer_id}/purchases?limit=50"
+        ))?,
+        next_buy: get_json(&format!(
+            "{base}/api/v1/customers/{customer_id}/next-buy?limit=20"
+        ))?,
+    })
+}
+
+fn fetch_items(base: &str, query: &str) -> Result<Vec<ItemSummary>, String> {
+    let url = if query.trim().is_empty() {
+        format!("{}/api/v1/items?limit=100", normalize_base(base))
     } else {
-        &app.status
+        format!(
+            "{}/api/v1/items?limit=100&q={}",
+            normalize_base(base),
+            urlencoding::encode(query.trim())
+        )
+    };
+    get_json(&url)
+}
+
+fn fetch_item_bundle(base: &str, item_id: &str) -> Result<ItemBundle, String> {
+    let base = normalize_base(base);
+    Ok(ItemBundle {
+        detail: get_json(&format!("{base}/api/v1/items/{item_id}"))?,
+        inventory: get_json(&format!("{base}/api/v1/items/{item_id}/inventory"))?,
+        risk: get_json_optional(&format!("{base}/api/v1/items/{item_id}/risk"))?,
+    })
+}
+
+fn fetch_simulations(base: &str) -> Result<Vec<SimulationSummary>, String> {
+    get_json(&format!(
+        "{}/api/v1/simulations?limit=50",
+        normalize_base(base)
+    ))
+}
+
+fn fetch_simulation_bundle(base: &str, run_id: &str) -> Result<SimulationBundle, String> {
+    let base = normalize_base(base);
+    let detail: SimulationDetail = get_json(&format!("{base}/api/v1/simulations/{run_id}"))?;
+    let report = get_json_optional::<SimulationReportEnvelope>(&format!(
+        "{base}/api/v1/simulations/{run_id}/report"
+    ))?
+    .map(|envelope| envelope.report);
+    Ok(SimulationBundle { detail, report })
+}
+
+fn create_simulation(base: &str) -> Result<SimulationDetail, String> {
+    post_json(
+        &format!("{}/api/v1/simulations", normalize_base(base)),
+        &CreateSimulationRequest {
+            scenario_id: "baseline-api".to_string(),
+            scenario_name: "ベースライン API 実行".to_string(),
+            scenario_description: "GUI から起動した既定シナリオ".to_string(),
+            horizon_days: 30,
+            initial_cash: 1_000_000,
+            currency: "JPY".to_string(),
+        },
+    )
+}
+
+fn get_json<T: DeserializeOwned>(url: &str) -> Result<T, String> {
+    let client = Client::new();
+    let response = client.get(url).send().map_err(|error| error.to_string())?;
+    parse_response(response)
+}
+
+fn get_json_optional<T: DeserializeOwned>(url: &str) -> Result<Option<T>, String> {
+    let client = Client::new();
+    let response = client.get(url).send().map_err(|error| error.to_string())?;
+    if response.status() == reqwest::StatusCode::NOT_FOUND {
+        return Ok(None);
+    }
+    parse_response(response).map(Some)
+}
+
+fn post_json<TReq: Serialize, TRes: DeserializeOwned>(
+    url: &str,
+    payload: &TReq,
+) -> Result<TRes, String> {
+    let client = Client::new();
+    let response = client
+        .post(url)
+        .json(payload)
+        .send()
+        .map_err(|error| error.to_string())?;
+    parse_response(response)
+}
+
+fn parse_response<T: DeserializeOwned>(response: reqwest::blocking::Response) -> Result<T, String> {
+    if response.status().is_success() {
+        response.json::<T>().map_err(|error| error.to_string())
+    } else {
+        let status = response.status();
+        let body = response.text().unwrap_or_else(|_| String::new());
+        Err(format!("API error {}: {}", status, body))
     }
 }
 
-fn kpi_card(title: &'static str, value: String) -> Element<'static, Message> {
-    container(column![text(title), text(value)].spacing(4))
-        .padding(10)
-        .width(Length::FillPortion(1))
-        .into()
+fn normalize_base(base: &str) -> String {
+    base.trim_end_matches('/').to_string()
 }
 
-fn with_commas(v: i64) -> String {
-    let s = v.abs().to_string();
+fn with_commas(value: i64) -> String {
+    let s = value.abs().to_string();
     let mut out = String::with_capacity(s.len() + s.len() / 3);
-    for (i, ch) in s.chars().rev().enumerate() {
-        if i > 0 && i % 3 == 0 {
+    for (idx, ch) in s.chars().rev().enumerate() {
+        if idx > 0 && idx % 3 == 0 {
             out.push(',');
         }
         out.push(ch);
     }
     let mut out: String = out.chars().rev().collect();
-    if v < 0 {
+    if value < 0 {
         out.insert(0, '-');
     }
     out
 }
 
-fn normalize_input_path(raw: &str) -> String {
-    let mut s = raw.trim().to_string();
-    if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
-        s = s[1..s.len() - 1].to_string();
-    }
-    if let Some(stripped) = s.strip_prefix("file://") {
-        s = stripped.to_string();
-    }
-    s
+fn money_opt(value: Option<f64>) -> String {
+    value
+        .map(|amount| format!("{amount:.2}"))
+        .unwrap_or_else(|| "-".to_string())
 }
 
-#[derive(Debug, Clone)]
-struct ComputedMetrics {
-    net_cash_change: i64,
-    total_inflow: i64,
-    total_outflow: i64,
-    total_demand: u32,
-    total_sold: u32,
-    total_stockout: u32,
-    stockout_rate: f64,
-    top_stockout_item: String,
-    top_stockout_qty: u32,
-}
-
-fn summarize_metrics(cash: &[CashPoint], inv: &[InventoryPoint]) -> ComputedMetrics {
-    let total_inflow = cash.iter().map(|c| c.inflow).sum::<i64>();
-    let total_outflow = cash.iter().map(|c| c.outflow).sum::<i64>();
-    let net_cash_change = if let (Some(first), Some(last)) = (cash.first(), cash.last()) {
-        last.cash - first.cash
-    } else {
-        0
-    };
-
-    let total_demand = inv.iter().map(|v| v.demand).sum::<u32>();
-    let total_sold = inv.iter().map(|v| v.sold).sum::<u32>();
-    let total_stockout = inv.iter().map(|v| v.stockout).sum::<u32>();
-    let stockout_rate = if total_demand == 0 {
-        0.0
-    } else {
-        total_stockout as f64 / total_demand as f64
-    };
-
-    let mut by_item: BTreeMap<String, u32> = BTreeMap::new();
-    for row in inv {
-        *by_item.entry(row.item_id.clone()).or_insert(0) += row.stockout;
+fn yes_no(value: Option<bool>) -> &'static str {
+    match value {
+        Some(true) => "yes",
+        Some(false) => "no",
+        None => "-",
     }
-    let (top_stockout_item, top_stockout_qty) = by_item
-        .into_iter()
-        .max_by_key(|(_, qty)| *qty)
-        .unwrap_or_else(|| ("-".to_string(), 0));
-
-    ComputedMetrics {
-        net_cash_change,
-        total_inflow,
-        total_outflow,
-        total_demand,
-        total_sold,
-        total_stockout,
-        stockout_rate,
-        top_stockout_item,
-        top_stockout_qty,
-    }
-}
-
-fn cash_series_view(rows: &[CashPoint]) -> iced::widget::Column<'static, Message> {
-    if rows.is_empty() {
-        return column![text("- （資金推移なし）")];
-    }
-    let min = rows.iter().map(|r| r.cash).min().unwrap_or(0) as f32;
-    let max = rows.iter().map(|r| r.cash).max().unwrap_or(0) as f32;
-    let range = (max - min).max(1.0);
-
-    let mut col = column![].spacing(6);
-    for r in rows {
-        let ratio = ((r.cash as f32 - min) / range).clamp(0.0, 1.0);
-        col = col.push(
-            row![
-                text(format!(
-                    "{}  残高={}  入出金={}/{}",
-                    r.date,
-                    with_commas(r.cash),
-                    with_commas(r.inflow),
-                    with_commas(r.outflow)
-                ))
-                .width(Length::FillPortion(3)),
-                progress_bar(0.0..=1.0, ratio).width(Length::FillPortion(2)),
-            ]
-            .spacing(10),
-        );
-    }
-    col
-}
-
-fn daily_stockout_view(rows: &[InventoryPoint]) -> iced::widget::Column<'static, Message> {
-    if rows.is_empty() {
-        return column![text("- （在庫推移なし）").width(Length::Fill)];
-    }
-    let mut by_day: BTreeMap<String, u32> = BTreeMap::new();
-    for r in rows {
-        *by_day.entry(r.date.clone()).or_insert(0) += r.stockout;
-    }
-    let mut col = column![].spacing(6).width(Length::Fill);
-    for (date, qty) in by_day {
-        col = col.push(
-            row![
-                text(date).width(Length::FillPortion(2)),
-                text(format!("欠品={qty}")).width(Length::FillPortion(3)),
-            ]
-            .spacing(10)
-            .width(Length::Fill),
-        );
-    }
-    col
 }

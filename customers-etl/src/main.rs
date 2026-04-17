@@ -19,9 +19,11 @@ use customers_etl::output::{
     OutputPaths, ensure_output_dir, print_summary, write_cleaned_output, write_issue_log,
     write_run_summary, write_segment_summary,
 };
+use customers_etl::persistence::persist_run;
 use customers_etl::{build_segment_summary, format_dataset};
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let config = CliConfig::parse_from_env()
         .map_err(|message| std::io::Error::new(std::io::ErrorKind::InvalidInput, message))?;
     let started_at = Utc::now();
@@ -43,6 +45,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         &output_paths.run_summary_json,
     )?;
     print_summary(&run, &segment_summary, &output_paths);
+
+    if config.database_url.is_some() {
+        let persist_summary = persist_run(&config, &run).await?;
+        println!(
+            "\nPostgreSQL への保存が完了しました\n  customers: {}\n  customer_load_issues: {}\n  etl_job_runs: 1",
+            persist_summary.customers_upserted, persist_summary.issues_inserted
+        );
+    }
 
     Ok(())
 }

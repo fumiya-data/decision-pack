@@ -5,7 +5,9 @@ use decision_engine::report::types::{
     SimulationReport,
 };
 use decision_engine::sim::cashflow::{cash_additive_holds, cash_one_day};
-use decision_engine::sim::inventory::{inv_conservation_holds, inventory_one_day, inventory_step_spec};
+use decision_engine::sim::inventory::{
+    inv_conservation_holds, inventory_one_day, inventory_step_spec,
+};
 
 #[test]
 fn inventory_one_day_matches_spec_behavior() {
