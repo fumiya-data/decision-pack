@@ -1,8 +1,8 @@
 use csv::{ReaderBuilder, Trim};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct ItemRow {
     pub item_id: String,
     pub item_name: String,
@@ -14,7 +14,7 @@ pub struct ItemRow {
     pub lot_size: Option<i32>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OrderRow {
     pub order_id: String,
     pub customer_id: String,
@@ -24,7 +24,7 @@ pub struct OrderRow {
     pub total_amount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OrderItemRow {
     pub order_id: String,
     pub line_no: i32,
@@ -34,7 +34,7 @@ pub struct OrderItemRow {
     pub line_amount: Option<f64>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct InventoryRow {
     pub item_id: String,
     pub on_hand: i32,

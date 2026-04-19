@@ -3,3 +3,4 @@
 pub mod config;
 pub mod csv_input;
 pub mod persistence;
+pub mod sample;

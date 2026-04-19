@@ -8,7 +8,7 @@ use chrono::{DateTime, Utc};
 use csv::Writer;
 use serde::Serialize;
 
-use crate::config::CliConfig;
+use crate::config::FormatConfig;
 use crate::formatter::FormatRun;
 use crate::report::IssueKind;
 use crate::schema::Column;
@@ -159,7 +159,7 @@ pub fn write_segment_summary(
 
 /// 運用追跡用の JSON 実行要約を書き出します。
 pub fn write_run_summary(
-    config: &CliConfig,
+    config: &FormatConfig,
     run: &FormatRun,
     summary: &SegmentSummary,
     started_at: DateTime<Utc>,

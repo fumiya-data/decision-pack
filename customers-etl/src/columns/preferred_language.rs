@@ -16,6 +16,10 @@ pub fn process(raw: &str) -> FieldResult {
         "en-gb" => "en-GB",
         "en-us" => "en-US",
         "ja" | "jp" => "ja",
+        "hi" | "hi-in" => "hi",
+        "zh" => "zh",
+        "zh-cn" => "zh-CN",
+        "zh-tw" => "zh-TW",
         "es" => "es",
         _ => return FieldResult::failure(cleaned, "unsupported language code"),
     };

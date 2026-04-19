@@ -1,6 +1,6 @@
 //! `customers-etl` の PostgreSQL 永続化です。
 
-use crate::config::CliConfig;
+use crate::config::FormatConfig;
 use crate::formatter::FormatRun;
 use crate::schema::Column;
 use sqlx::{Postgres, Transaction, postgres::PgPoolOptions};
@@ -35,7 +35,7 @@ struct CustomerRecord {
 }
 
 pub async fn persist_run(
-    config: &CliConfig,
+    config: &FormatConfig,
     run: &FormatRun,
 ) -> Result<PersistSummary, Box<dyn std::error::Error>> {
     let database_url = config
@@ -180,7 +180,7 @@ async fn upsert_customer(
 
 async fn insert_issue(
     tx: &mut Transaction<'_, Postgres>,
-    config: &CliConfig,
+    config: &FormatConfig,
     issue: &crate::report::IssueRecord,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
@@ -210,7 +210,7 @@ async fn insert_issue(
 
 async fn upsert_job_run(
     tx: &mut Transaction<'_, Postgres>,
-    config: &CliConfig,
+    config: &FormatConfig,
     issues_inserted: usize,
 ) -> Result<(), sqlx::Error> {
     let artifact_uri = config.output_dir.display().to_string();

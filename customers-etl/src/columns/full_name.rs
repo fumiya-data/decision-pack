@@ -57,7 +57,11 @@ pub fn process(raw: &str) -> FieldResult {
         .split_whitespace()
         .filter(|part| part.chars().any(char::is_alphabetic))
         .count();
-    if parts < 2 {
+    let non_ascii_alpha_count = reordered
+        .chars()
+        .filter(|ch| ch.is_alphabetic() && !ch.is_ascii())
+        .count();
+    if parts < 2 && non_ascii_alpha_count < 2 {
         return FieldResult::failure(reordered, "expected at least a first and last name");
     }
 

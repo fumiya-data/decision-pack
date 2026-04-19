@@ -24,6 +24,8 @@ pub fn process(raw: &str) -> FieldResult {
         "australia" | "au" => "Australia".to_string(),
         "germany" | "de" => "Germany".to_string(),
         "france" => "France".to_string(),
+        "india" | "in" | "ind" => "India".to_string(),
+        "china" | "cn" | "prc" => "China".to_string(),
         "singapore" | "sg" => "Singapore".to_string(),
         "spain" => "Spain".to_string(),
         _ => title_case(&cleaned),

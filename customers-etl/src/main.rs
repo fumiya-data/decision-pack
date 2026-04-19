@@ -14,18 +14,40 @@ use std::error::Error;
 use std::fs;
 
 use chrono::Utc;
-use customers_etl::config::CliConfig;
+use customers_etl::config::{CliCommand, FormatConfig};
 use customers_etl::output::{
     OutputPaths, ensure_output_dir, print_summary, write_cleaned_output, write_issue_log,
     write_run_summary, write_segment_summary,
 };
 use customers_etl::persistence::persist_run;
-use customers_etl::{build_segment_summary, format_dataset};
+use customers_etl::{build_segment_summary, format_dataset, generate_raw_sample};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let config = CliConfig::parse_from_env()
+    let command = CliCommand::parse_from_env()
         .map_err(|message| std::io::Error::new(std::io::ErrorKind::InvalidInput, message))?;
+
+    match command {
+        CliCommand::Format(config) => run_format(config).await,
+        CliCommand::GenerateRawSample(config) => {
+            let summary = generate_raw_sample(&config)?;
+            println!(
+                "未整形 raw サンプルを生成しました\n  output_raw: {}\n  output_metadata: {}\n  target_formatted_count: {}\n  raw_rows_written: {}\n  embedded_headers: {}\n  invalid_rows: {}",
+                summary.output_raw,
+                summary.output_metadata,
+                summary.target_formatted_count,
+                summary.raw_rows_written,
+                summary.embedded_headers_written,
+                summary.invalid_rows_written
+            );
+            println!("  countries: {:?}", summary.country_counts);
+            println!("  languages: {:?}", summary.language_counts);
+            Ok(())
+        }
+    }
+}
+
+async fn run_format(config: FormatConfig) -> Result<(), Box<dyn Error>> {
     let started_at = Utc::now();
     let input = fs::read_to_string(&config.input)?;
     let run = format_dataset(&input);

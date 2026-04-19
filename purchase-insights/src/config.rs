@@ -8,6 +8,9 @@ pub struct CliConfig {
     pub weight_repeat: f64,
     pub weight_transition: f64,
     pub weight_segment: f64,
+    pub evaluate: bool,
+    pub skip_persist: bool,
+    pub min_orders_for_eval: usize,
 }
 
 impl CliConfig {
@@ -18,10 +21,15 @@ impl CliConfig {
         let mut weight_repeat = None;
         let mut weight_transition = None;
         let mut weight_segment = None;
+        let mut evaluate = false;
+        let mut skip_persist = false;
+        let mut min_orders_for_eval = None;
 
         let mut args = env::args().skip(1);
         while let Some(arg) = args.next() {
             match arg.as_str() {
+                "--evaluate" => evaluate = true,
+                "--skip-persist" => skip_persist = true,
                 "--database-url" => database_url = Some(next_string(&mut args, "--database-url")?),
                 "--run-id" => run_id = Some(next_string(&mut args, "--run-id")?),
                 "--top-n" => {
@@ -37,6 +45,9 @@ impl CliConfig {
                 }
                 "--weight-segment" => {
                     weight_segment = Some(parse_f64(&mut args, "--weight-segment")?)
+                }
+                "--min-orders-for-eval" => {
+                    min_orders_for_eval = Some(parse_usize(&mut args, "--min-orders-for-eval")?)
                 }
                 "--help" | "-h" => return Err(Self::usage()),
                 other => return Err(format!("未知の引数です: `{other}`\n\n{}", Self::usage())),
@@ -55,11 +66,14 @@ impl CliConfig {
             weight_repeat: weight_repeat.unwrap_or(0.5),
             weight_transition: weight_transition.unwrap_or(0.3),
             weight_segment: weight_segment.unwrap_or(0.2),
+            evaluate,
+            skip_persist,
+            min_orders_for_eval: min_orders_for_eval.unwrap_or(2),
         })
     }
 
     fn usage() -> String {
-        "使い方: cargo run -p purchase-insights -- --database-url <URL> [--run-id <ID>] [--top-n <N>] [--weight-repeat <F>] [--weight-transition <F>] [--weight-segment <F>]".to_string()
+        "使い方: cargo run -p purchase-insights -- --database-url <URL> [--run-id <ID>] [--top-n <N>] [--weight-repeat <F>] [--weight-transition <F>] [--weight-segment <F>] [--evaluate] [--skip-persist] [--min-orders-for-eval <N>]".to_string()
     }
 }
 
@@ -72,4 +86,10 @@ fn parse_f64(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<f64,
     next_string(args, flag)?
         .parse()
         .map_err(|_| format!("{flag} は数値で指定してください"))
+}
+
+fn parse_usize(args: &mut impl Iterator<Item = String>, flag: &str) -> Result<usize, String> {
+    next_string(args, flag)?
+        .parse()
+        .map_err(|_| format!("{flag} は整数で指定してください"))
 }

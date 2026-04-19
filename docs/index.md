@@ -28,6 +28,10 @@
   - ドメイン概念、主要エンティティ、集約の境界
 - `specs/data-contracts.md`
   - CSV、DB、API、レポート JSON の契約
+- `specs/sample-dataset-spec.md`
+  - 評価用サンプルデータの規模、分布、生成規則
+- `specs/recommendation-evaluation-spec.md`
+  - 推薦評価の方式と指標
 - `specs/non-functional-requirements.md`
   - 性能、運用、監査、変更容易性などの非機能要件
 
@@ -61,6 +65,12 @@
 
 ## 6. 記録
 
+- `progress/2026-04-19-1016-full-sample-local-only-policy.md`
+  - full 規模サンプルをローカル専用とし、Git と GitHub に反映しない方針を固定
+- `progress/2026-04-19-0950-multilingual-raw-customer-sample.md`
+  - 50,000 件整形済みを得るための多言語 raw 顧客サンプルを生成
+- `progress/2026-04-17-2212-sample-spec-and-evaluation-added.md`
+  - 評価用サンプル仕様と推薦評価を追加
 - `progress/2026-04-17-2137-phase-1-implementation-complete.md`
   - ETL、需要予測、シミュレーション、API、GUI の実装フェーズ1完了
 - `progress/2026-04-17-2112-initial-implementation-started.md`

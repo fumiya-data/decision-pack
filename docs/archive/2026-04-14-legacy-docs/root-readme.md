@@ -19,6 +19,6 @@ Decision Pack は、在庫・資金の意思決定支援、顧客データ前処
 
 ```powershell
 cargo test --workspace
-cargo run -p customers-etl -- --input data/customers/raw/dirty_customers_5000.csv --output-dir out/customers-etl/dev --run-id dev
+cargo run -p customers-etl -- --input data/customers/raw/raw_customers_5000.csv --output-dir out/customers-etl/dev --run-id dev
 cargo run -p engine
 ```

@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .join("data")
         .join("customers")
         .join("raw")
-        .join("dirty_customers_5000.csv");
+        .join("raw_customers_5000.csv");
     let input = fs::read_to_string(&input_path)?;
     let mut canonical = 0usize;
     let mut needs_cleanup = Vec::new();

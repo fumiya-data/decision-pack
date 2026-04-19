@@ -14,7 +14,7 @@
 ワークスペースのルートで次を実行します。
 
 ```powershell
-cargo run -p customers-etl -- --input data/customers/raw/dirty_customers_5000.csv --output-dir out/customers-etl/dev --run-id dev
+cargo run -p customers-etl -- --input data/customers/raw/raw_customers_5000.csv --output-dir out/customers-etl/dev --run-id dev
 ```
 
 意思決定支援側へ渡すのは集約済みの顧客データのみです。個別の顧客 ID は `engine` へ持ち込みません。

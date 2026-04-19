@@ -13,10 +13,12 @@ pub mod formatter;
 pub mod output;
 pub mod persistence;
 pub mod report;
+pub mod sample;
 pub mod schema;
 pub mod summary;
 
 /// 呼び出し側が内部モジュール構成を意識せずに済むよう、
 /// エンドツーエンド整形結果を再公開します。
 pub use formatter::{FormatRun, format_dataset};
+pub use sample::{GeneratedRawSampleSummary, generate_raw_sample};
 pub use summary::{SegmentRow, SegmentSummary, build_segment_summary};

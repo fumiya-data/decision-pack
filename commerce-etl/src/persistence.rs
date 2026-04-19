@@ -1,4 +1,4 @@
-use crate::config::CliConfig;
+use crate::config::ImportConfig;
 use crate::csv_input::{InventoryRow, ItemRow, OrderItemRow, OrderRow};
 use sqlx::{Postgres, Transaction, postgres::PgPoolOptions};
 
@@ -11,7 +11,7 @@ pub struct PersistSummary {
 }
 
 pub async fn persist_all(
-    config: &CliConfig,
+    config: &ImportConfig,
     items: &[ItemRow],
     orders: &[OrderRow],
     order_items: &[OrderItemRow],
@@ -170,7 +170,7 @@ async fn upsert_inventory(
 }
 
 async fn upsert_job_run(
-    config: &CliConfig,
+    config: &ImportConfig,
     tx: &mut Transaction<'_, Postgres>,
     items: usize,
     orders: usize,

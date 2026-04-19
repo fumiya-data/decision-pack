@@ -24,7 +24,7 @@
 - `src/report.rs` に、列別統計・行スキップ・不正行・フィールド失敗の集計ロジックがある
 - `src/lib.rs` は `FormatRun` と `format_dataset` を再公開しており、ライブラリ化の土台がある
 - `src/main.rs` は入力・出力ファイルパスを定数で固定しており、任意パス実行やクラウド実行に未対応である
-- モノレポ移行後のローカル fixture は `data/customers/raw/dirty_customers_5000.csv` を入力とし、`formatted.csv`、`format_issues.csv`、`customer_segment_summary.csv`、`run_summary.json` を標準成果物とする
+- モノレポ移行後のローカル fixture は `data/customers/raw/raw_customers_5000.csv` を入力とし、`formatted.csv`、`format_issues.csv`、`customer_segment_summary.csv`、`run_summary.json` を標準成果物とする
 
 このため、既存コードを全面書き換えするのではなく、**コア整形ロジックは維持しつつ、実行設定・出力契約・運用機能を追加する** 方針で進める。
 
@@ -189,7 +189,7 @@ processed/customers/date=YYYY-MM-DD/latest.json
 
 | 設定名 | 用途 | 例 |
 | --- | --- | --- |
-| `--input` | ローカル入力ファイル | `data/customers/raw/dirty_customers_5000.csv` |
+| `--input` | ローカル入力ファイル | `data/customers/raw/raw_customers_5000.csv` |
 | `--output-dir` | ローカル出力先ディレクトリ | `./out/2026-04-12T010000Z` |
 | `--run-id` | 実行識別子 | `20260412T010000Z_local` |
 | `--load-postgres` | DBロード有無 | `true` / `false` |
@@ -323,7 +323,7 @@ processed/customers/date=YYYY-MM-DD/latest.json
 - 以下のようなコマンドで実行できる
 
 ```bash
-cargo run -p customers-etl -- --input data/customers/raw/dirty_customers_5000.csv --output-dir out/customers-etl/2026-04-12T010000Z --run-id 20260412T010000Z_local
+cargo run -p customers-etl -- --input data/customers/raw/raw_customers_5000.csv --output-dir out/customers-etl/2026-04-12T010000Z --run-id 20260412T010000Z_local
 ```
 
 - 出力先に `formatted.csv`、`format_issues.csv`、`customer_segment_summary.csv`、`run_summary.json` が生成される
