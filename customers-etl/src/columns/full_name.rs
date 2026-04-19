@@ -43,10 +43,8 @@ pub fn process(raw: &str) -> FieldResult {
     };
 
     // 数字、メール記号、その他の明白な列ずれ信号は拒否します。
-    if reordered
-        .chars()
-        .any(|ch| !ch.is_alphabetic() && !ch.is_whitespace() && !matches!(ch, '\'' | '-' | '.'))
-    {
+    // ヒンディー語などで使われる結合記号は、スクリプト範囲で明示的に許可します。
+    if reordered.chars().any(|ch| !is_allowed_name_char(ch)) {
         return FieldResult::failure(
             reordered,
             "contains characters outside the allowed name set",
@@ -66,4 +64,20 @@ pub fn process(raw: &str) -> FieldResult {
     }
 
     FieldResult::success(title_case(&reordered))
+}
+
+fn is_allowed_name_char(ch: char) -> bool {
+    ch.is_whitespace()
+        || matches!(ch, '\'' | '-' | '.')
+        || ch.is_alphabetic()
+        || is_supported_combining_mark(ch)
+}
+
+fn is_supported_combining_mark(ch: char) -> bool {
+    let code = ch as u32;
+    ((0x0900..=0x097f).contains(&code)
+        || (0x1cd0..=0x1cff).contains(&code)
+        || (0xa8e0..=0xa8ff).contains(&code))
+        && !ch.is_numeric()
+        && !matches!(ch, '।' | '॥')
 }

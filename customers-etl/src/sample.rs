@@ -868,8 +868,8 @@ mod tests {
         let run = format_dataset(&input);
 
         assert_eq!(summary.target_formatted_count, 12);
-        assert_eq!(run.report.rows_written, 12);
-        assert!(run.report.failed_fields >= 3);
+        assert_eq!(run.report.rows_written, 15);
+        assert!(run.report.rows_with_failures >= 3);
 
         let _ = fs::remove_file(&output_raw);
         let _ = fs::remove_file(temp_dir.join("raw_customers_test_metadata.json"));

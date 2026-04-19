@@ -9,6 +9,7 @@ use sqlx::{Postgres, Transaction, postgres::PgPoolOptions};
 pub struct PersistSummary {
     pub customers_upserted: usize,
     pub issues_inserted: usize,
+    pub rows_skipped_for_persist: usize,
 }
 
 #[derive(Debug)]
@@ -49,10 +50,17 @@ pub async fn persist_run(
     let mut tx = pool.begin().await?;
 
     let mut customers_upserted = 0usize;
+    let mut rows_skipped_for_persist = 0usize;
     for row in run.cleaned_rows.iter().skip(1) {
-        let customer = CustomerRecord::from_row(row)?;
-        upsert_customer(&mut tx, customer).await?;
-        customers_upserted += 1;
+        match CustomerRecord::from_row(row) {
+            Ok(customer) => {
+                upsert_customer(&mut tx, customer).await?;
+                customers_upserted += 1;
+            }
+            Err(_) => {
+                rows_skipped_for_persist += 1;
+            }
+        }
     }
 
     let mut issues_inserted = 0usize;
@@ -67,6 +75,7 @@ pub async fn persist_run(
     Ok(PersistSummary {
         customers_upserted,
         issues_inserted,
+        rows_skipped_for_persist,
     })
 }
 
@@ -197,7 +206,12 @@ async fn insert_issue(
         "#,
     )
     .bind(Option::<String>::None)
-    .bind(issue.column.map(|column| column.header().to_string()))
+    .bind(
+        issue
+            .column
+            .map(|column| column.header().to_string())
+            .unwrap_or_else(|| "__row__".to_string()),
+    )
     .bind(issue.kind.as_str())
     .bind(issue.raw_value.clone())
     .bind(issue.reason.clone())

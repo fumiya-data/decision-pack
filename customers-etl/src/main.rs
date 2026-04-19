@@ -71,8 +71,10 @@ async fn run_format(config: FormatConfig) -> Result<(), Box<dyn Error>> {
     if config.database_url.is_some() {
         let persist_summary = persist_run(&config, &run).await?;
         println!(
-            "\nPostgreSQL への保存が完了しました\n  customers: {}\n  customer_load_issues: {}\n  etl_job_runs: 1",
-            persist_summary.customers_upserted, persist_summary.issues_inserted
+            "\nPostgreSQL への保存が完了しました\n  customers: {}\n  customer_load_issues: {}\n  persist_skipped_rows: {}\n  etl_job_runs: 1",
+            persist_summary.customers_upserted,
+            persist_summary.issues_inserted,
+            persist_summary.rows_skipped_for_persist
         );
     }
 
