@@ -1,0 +1,165 @@
+name: decision-pack
+
+x-decision-pack-env: &decision-pack-env
+  DATABASE_URL: postgres://postgres:postgres@postgres:5432/decision_pack_app
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: decision_pack_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d decision_pack_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    image: decision-pack:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      <<: *decision-pack-env
+    command:
+      - /usr/local/bin/db-migrate
+      - --migrations-dir
+      - db/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app-api:
+    image: decision-pack:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    environment:
+      <<: *decision-pack-env
+      APP_API_BIND_ADDR: 0.0.0.0:8080
+      APP_API_SERVICE_NAME: decision-pack-app-api-docker
+    ports:
+      - "${APP_API_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  customers-etl-smoke:
+    image: decision-pack:local
+    profiles: ["jobs"]
+    environment:
+      <<: *decision-pack-env
+    command:
+      - /usr/local/bin/customers-etl
+      - --input
+      - data/customers/raw/raw_customers_5000.csv
+      - --output-dir
+      - out/customers-etl/docker-smoke
+      - --run-id
+      - customers-docker-smoke
+    volumes:
+      - ./out:/app/out
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  commerce-sample-smoke:
+    image: decision-pack:local
+    profiles: ["jobs"]
+    command:
+      - /usr/local/bin/commerce-etl
+      - --generate-sample
+      - --customers-csv
+      - out/customers-etl/docker-smoke/formatted.csv
+      - --output-dir
+      - out/commerce-docker-smoke
+      - --customer-count
+      - "5000"
+      - --item-count
+      - "100"
+      - --order-count
+      - "15000"
+      - --seed
+      - "20260417"
+    volumes:
+      - ./out:/app/out
+
+  commerce-etl-smoke:
+    image: decision-pack:local
+    profiles: ["jobs"]
+    environment:
+      <<: *decision-pack-env
+    command:
+      - /usr/local/bin/commerce-etl
+      - --items-csv
+      - out/commerce-docker-smoke/items.csv
+      - --orders-csv
+      - out/commerce-docker-smoke/orders.csv
+      - --order-items-csv
+      - out/commerce-docker-smoke/order_items.csv
+      - --inventory-csv
+      - out/commerce-docker-smoke/inventory.csv
+      - --run-id
+      - commerce-docker-smoke
+    volumes:
+      - ./out:/app/out
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  purchase-insights-smoke:
+    image: decision-pack:local
+    profiles: ["jobs"]
+    environment:
+      <<: *decision-pack-env
+    command:
+      - /usr/local/bin/purchase-insights
+      - --run-id
+      - insights-docker-smoke
+      - --evaluate
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  decision-engine-report:
+    image: decision-pack:local
+    profiles: ["jobs"]
+    command:
+      - /usr/local/bin/decision-engine
+    volumes:
+      - ./out:/app/out
+
+  reporting-smoke:
+    build:
+      context: .
+      dockerfile: reporting/python/Dockerfile
+    image: decision-pack-reporting:local
+    profiles: ["jobs"]
+    command:
+      - python
+      - -m
+      - decision_report.cli
+      - --input
+      - out/simulation_report_v0.1.json
+      - --out-dir
+      - out/reporting-docker-smoke
+    volumes:
+      - ./out:/app/out
+
+volumes:
+  postgres-data:

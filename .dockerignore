@@ -1,0 +1,16 @@
+.git
+.gitignore
+target
+out
+**/target
+**/.venv
+**/__pycache__
+**/*.pyc
+
+# Full-scale generated datasets are intentionally local-only.
+data/customers/raw/*50000*.csv
+data/customers/raw/*50000*.json
+data/customers/expected/*50000*.csv
+data/customers/expected/*50000*.json
+data/commerce/*150000*.csv
+data/commerce/*150000*.json

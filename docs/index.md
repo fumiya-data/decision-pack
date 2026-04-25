@@ -17,6 +17,8 @@
   - フェーズ単位の実装順と完了条件
 - `plans/existing-module-migration-plan.md`
   - 既存モジュールを新しい責務構造へ移すための移行方針
+- `plans/docker-learning-roadmap.md`
+  - Docker 習熟の順序と、Docker Compose によるローカル運用の完了条件
 
 ## 3. 仕様
 
@@ -50,6 +52,8 @@
 
 - `operations/local-operations-runbook.md`
   - ローカルで DB 作成、migration、ETL、分析、API、GUI、reporting を一通り実行する手順
+- `operations/docker-local-runbook.md`
+  - Docker Compose で DB、migration、ETL、分析、API、reporting を一通り実行する手順
 
 ## 6. 意思決定記録
 
@@ -70,6 +74,8 @@
 
 ## 7. 記録
 
+- `progress/2026-04-25-2228-docker-local-operations.md`
+  - Docker ローカル運用の足場、Docker 習熟ロードマップ、Docker runbook を追加
 - `progress/2026-04-25-1604-local-operations-runbook.md`
   - ローカル運用 runbook を追加し、実行順と検証手順を文書化
 - `progress/2026-04-25-1630-app-api-hardening-and-integration-tests.md`

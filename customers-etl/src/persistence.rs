@@ -3,6 +3,7 @@
 use crate::config::FormatConfig;
 use crate::formatter::FormatRun;
 use crate::schema::Column;
+use chrono::NaiveDate;
 use sqlx::{Postgres, Transaction, postgres::PgPoolOptions};
 
 #[derive(Debug, Clone, Copy)]
@@ -23,9 +24,9 @@ struct CustomerRecord {
     region: Option<String>,
     postal_code: Option<String>,
     country: Option<String>,
-    birth_date: Option<String>,
-    signup_date: Option<String>,
-    last_purchase_date: Option<String>,
+    birth_date: Option<NaiveDate>,
+    signup_date: Option<NaiveDate>,
+    last_purchase_date: Option<NaiveDate>,
     status: Option<String>,
     tier: Option<String>,
     preferred_language: Option<String>,
@@ -91,9 +92,9 @@ impl CustomerRecord {
             region: optional(row, Column::Region),
             postal_code: optional(row, Column::PostalCode),
             country: optional(row, Column::Country),
-            birth_date: optional(row, Column::BirthDate),
-            signup_date: optional(row, Column::SignupDate),
-            last_purchase_date: optional(row, Column::LastPurchaseDate),
+            birth_date: optional_date(row, Column::BirthDate),
+            signup_date: optional_date(row, Column::SignupDate),
+            last_purchase_date: optional_date(row, Column::LastPurchaseDate),
             status: optional(row, Column::Status),
             tier: optional(row, Column::Tier),
             preferred_language: optional(row, Column::PreferredLanguage),
@@ -138,7 +139,7 @@ async fn upsert_customer(
             notes
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9,
-            $10::date, $11::date, $12::date, $13, $14, $15, $16, $17, $18, $19
+            $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
         )
         ON CONFLICT (customer_id) DO UPDATE
         SET
@@ -276,4 +277,73 @@ fn optional(row: &[String], column: Column) -> Option<String> {
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .map(ToOwned::to_owned)
+}
+
+fn optional_date(row: &[String], column: Column) -> Option<NaiveDate> {
+    optional(row, column).and_then(|value| NaiveDate::parse_from_str(&value, "%Y-%m-%d").ok())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CustomerRecord, optional_date};
+    use crate::schema::{Column, HEADER_ROW};
+    use chrono::NaiveDate;
+
+    fn valid_row() -> Vec<String> {
+        vec![
+            "CUST1".to_string(),
+            "Alice Smith".to_string(),
+            "alice@example.com".to_string(),
+            "09011112222".to_string(),
+            "1 Main St".to_string(),
+            "Tokyo".to_string(),
+            "Tokyo".to_string(),
+            "1000001".to_string(),
+            "Japan".to_string(),
+            "1980-01-01".to_string(),
+            "2020-01-01".to_string(),
+            "2024-01-01".to_string(),
+            "active".to_string(),
+            "gold".to_string(),
+            "ja".to_string(),
+            "true".to_string(),
+            "1200.50".to_string(),
+            "3".to_string(),
+            "note".to_string(),
+        ]
+    }
+
+    #[test]
+    fn optional_date_parses_normalized_date() {
+        let row = valid_row();
+
+        assert_eq!(
+            optional_date(&row, Column::BirthDate),
+            NaiveDate::from_ymd_opt(1980, 1, 1)
+        );
+    }
+
+    #[test]
+    fn optional_date_treats_invalid_optional_date_as_null() {
+        let mut row = valid_row();
+        row[Column::BirthDate.index()] = "1979-11-31".to_string();
+
+        assert_eq!(optional_date(&row, Column::BirthDate), None);
+    }
+
+    #[test]
+    fn customer_record_accepts_invalid_optional_dates_as_nulls() {
+        let mut row = valid_row();
+        row[Column::BirthDate.index()] = "1979-11-31".to_string();
+
+        let record = CustomerRecord::from_row(&row).unwrap();
+
+        assert_eq!(record.birth_date, None);
+        assert_eq!(record.signup_date, NaiveDate::from_ymd_opt(2020, 1, 1));
+    }
+
+    #[test]
+    fn fixture_row_has_expected_width() {
+        assert_eq!(valid_row().len(), HEADER_ROW.len());
+    }
 }

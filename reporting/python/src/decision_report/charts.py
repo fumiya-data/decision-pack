@@ -9,7 +9,9 @@ from matplotlib import font_manager
 from .models import Report
 
 _JAPANESE_FONT_CANDIDATES = [
+    "Noto Sans CJK JP",
     "Noto Sans JP",
+    "Noto Serif CJK JP",
     "Meiryo",
     "Yu Gothic",
     "BIZ UDGothic",

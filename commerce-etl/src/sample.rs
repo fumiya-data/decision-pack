@@ -71,14 +71,6 @@ pub fn generate_sample_files(
     config: &SampleConfig,
 ) -> Result<SampleSummary, Box<dyn std::error::Error>> {
     let customers = load_customer_seed(&config.customers_csv, config.customer_count)?;
-    if customers.len() != config.customer_count {
-        return Err(format!(
-            "顧客件数が不足しています。期待値={}, 実際={}",
-            config.customer_count,
-            customers.len()
-        )
-        .into());
-    }
 
     fs::create_dir_all(&config.output_dir)?;
     let mut rng = DeterministicRng::new(config.seed);
@@ -130,8 +122,18 @@ fn load_customer_seed(
 ) -> Result<Vec<CustomerProfile>, Box<dyn std::error::Error>> {
     let mut reader = ReaderBuilder::new().trim(Trim::All).from_path(path)?;
     let mut profiles = Vec::with_capacity(customer_count);
-    for row in reader.deserialize::<CustomerSeedRow>().take(customer_count) {
-        let row = row?;
+    let mut seen_customer_ids = BTreeSet::new();
+    for row in reader.deserialize::<CustomerSeedRow>() {
+        let mut row = row?;
+        row.customer_id = row.customer_id.trim().to_string();
+        if row.customer_id.is_empty() || !seen_customer_ids.insert(row.customer_id.clone()) {
+            continue;
+        }
+        row.country = trim_optional(row.country);
+        row.status = trim_optional(row.status);
+        row.tier = trim_optional(row.tier);
+        row.preferred_language = trim_optional(row.preferred_language);
+
         let country_code = row.country.as_deref().unwrap_or_default();
         let status = row.status.as_deref().unwrap_or_default();
         let tier = row.tier.as_deref().unwrap_or_default();
@@ -153,13 +155,28 @@ fn load_customer_seed(
             primary_category,
             secondary_category,
         });
+
+        if profiles.len() >= customer_count {
+            break;
+        }
     }
+
+    if profiles.is_empty() {
+        return Err("利用可能な customer_id がありません".into());
+    }
+
     profiles.sort_by(|a, b| {
         b.propensity
             .cmp(&a.propensity)
             .then(a.row.customer_id.cmp(&b.row.customer_id))
     });
     Ok(profiles)
+}
+
+fn trim_optional(value: Option<String>) -> Option<String> {
+    value
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
 }
 
 fn build_items(item_count: usize, rng: &mut DeterministicRng) -> Vec<ItemCatalogEntry> {
@@ -539,6 +556,35 @@ mod tests {
         assert!(summary.order_items >= 12);
         assert!(output.join("items.csv").exists());
         assert!(output.join("sample_metadata.json").exists());
+        let _ = fs::remove_dir_all(&temp);
+    }
+
+    #[test]
+    fn skips_blank_customer_ids_when_generating_orders() {
+        let temp = std::env::temp_dir().join("decision-pack-commerce-etl-sample-blank-id-test");
+        let _ = fs::remove_dir_all(&temp);
+        fs::create_dir_all(&temp).unwrap();
+        let customers_csv = temp.join("customers.csv");
+        fs::write(
+            &customers_csv,
+            "CustomerID,country,status,tier,preferred_language\nC1,Japan,active,gold,ja\n,Japan,active,gold,ja\nC2,United States,active,silver,en\n",
+        )
+        .unwrap();
+
+        let output = temp.join("out");
+        let summary = generate_sample_files(&SampleConfig {
+            customers_csv,
+            output_dir: output.clone(),
+            customer_count: 3,
+            item_count: 5,
+            order_count: 6,
+            seed: 42,
+        })
+        .unwrap();
+
+        assert_eq!(summary.customers, 2);
+        let orders_csv = fs::read_to_string(output.join("orders.csv")).unwrap();
+        assert!(!orders_csv.contains(",,"));
         let _ = fs::remove_dir_all(&temp);
     }
 }
