@@ -6,5 +6,6 @@ members = [
   "commerce-etl",
   "purchase-insights",
   "app-api",
+  "db-migrate",
 ]
 resolver = "2"

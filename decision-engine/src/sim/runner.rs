@@ -20,6 +20,8 @@ pub struct ItemRunInput {
     pub arrivals_by_day: Vec<Qty>,
     pub reorder_point: Qty,
     pub order_up_to: Qty,
+    pub moq: Qty,
+    pub lot_size: Qty,
     pub lead_time_days: Date,
     pub sales_unit_price: Yen,
     pub purchase_unit_cost: Yen,
@@ -272,7 +274,11 @@ impl<'a> ItemRuntime<'a> {
         let mut reorder_qty = 0;
         if self.on_hand <= self.input.reorder_point {
             let target = self.input.order_up_to.max(self.input.reorder_point);
-            reorder_qty = target.saturating_sub(self.on_hand);
+            reorder_qty = apply_replenishment_constraints(
+                target.saturating_sub(self.on_hand),
+                self.input.moq,
+                self.input.lot_size,
+            );
             if reorder_qty > 0 {
                 self.on_order = self.on_order.saturating_add(reorder_qty);
                 let due_idx = idx.saturating_add(self.input.lead_time_days as usize);
@@ -291,6 +297,24 @@ impl<'a> ItemRuntime<'a> {
             outflow: reorder_qty as Yen * self.input.purchase_unit_cost,
             reorder_qty,
         }
+    }
+}
+
+fn apply_replenishment_constraints(base_qty: Qty, moq: Qty, lot_size: Qty) -> Qty {
+    if base_qty == 0 {
+        return 0;
+    }
+
+    let constrained = base_qty.max(moq);
+    if lot_size == 0 {
+        return constrained;
+    }
+
+    let remainder = constrained % lot_size;
+    if remainder == 0 {
+        constrained
+    } else {
+        constrained.saturating_add(lot_size - remainder)
     }
 }
 
@@ -329,6 +353,8 @@ mod tests {
                 arrivals_by_day: vec![0, 0, 0],
                 reorder_point: 1,
                 order_up_to: 5,
+                moq: 0,
+                lot_size: 0,
                 lead_time_days: 1,
                 sales_unit_price: 1000,
                 purchase_unit_cost: 500,
@@ -339,5 +365,44 @@ mod tests {
         assert_eq!(output.report.inventory_series.len(), 3);
         assert_eq!(output.item_summaries.len(), 1);
         assert!(output.report.kpi.total_stockout_qty <= 6);
+    }
+
+    #[test]
+    fn run_scenario_applies_moq_and_lot_size_to_replenishment() {
+        let output = run_scenario(&ScenarioRunInput {
+            scenario_id: "constraints".into(),
+            scenario_name: "補充制約".into(),
+            scenario_description: None,
+            currency: "JPY".into(),
+            initial_cash: 100_000,
+            days: vec!["2026-04-01".into(), "2026-04-02".into()],
+            items: vec![ItemRunInput {
+                item_id: "A001".into(),
+                opening_on_hand: 1,
+                opening_on_order: 0,
+                demand_by_day: vec![1, 0],
+                arrivals_by_day: vec![0, 0],
+                reorder_point: 1,
+                order_up_to: 7,
+                moq: 8,
+                lot_size: 5,
+                lead_time_days: 1,
+                sales_unit_price: 1000,
+                purchase_unit_cost: 100,
+            }],
+        });
+
+        assert_eq!(output.item_summaries[0].recommended_reorder_qty, 10);
+        assert_eq!(output.report.cash_series[0].outflow, 1000);
+    }
+
+    #[test]
+    fn replenishment_constraints_leave_zero_order_at_zero() {
+        assert_eq!(super::apply_replenishment_constraints(0, 10, 5), 0);
+    }
+
+    #[test]
+    fn replenishment_constraints_apply_moq_without_lot_size() {
+        assert_eq!(super::apply_replenishment_constraints(3, 8, 0), 8);
     }
 }

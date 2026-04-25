@@ -74,6 +74,8 @@
   - ローカル運用 runbook を追加し、実行順と検証手順を文書化
 - `progress/2026-04-25-1630-app-api-hardening-and-integration-tests.md`
   - `app-api` のログ redaction、simulation report 日付修正、DB-backed 統合テストを追加
+- `progress/2026-04-25-1650-replenishment-schema-and-migration-runner.md`
+  - 補充制約を `decision-engine` に移し、schema 同期テストと migration runner を追加
 - `progress/2026-04-19-1016-full-sample-local-only-policy.md`
   - full 規模サンプルをローカル専用とし、Git と GitHub に反映しない方針を固定
 - `progress/2026-04-19-0950-multilingual-raw-customer-sample.md`

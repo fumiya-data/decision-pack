@@ -226,10 +226,9 @@ fn build_input(
             let base_reorder = avg_daily.saturating_mul(lead_time.max(1));
             let moq = item.moq.unwrap_or(0).max(0) as u32;
             let lot_size = item.lot_size.unwrap_or(0).max(0) as u32;
-            let reorder_point = base_reorder.max(moq);
+            let reorder_point = base_reorder;
             let safety_window = avg_daily.saturating_mul(7);
-            let replenishment_batch = safety_window.max(lot_size.max(moq));
-            let order_up_to = reorder_point.saturating_add(replenishment_batch);
+            let order_up_to = reorder_point.saturating_add(safety_window);
             let sales_price = item.avg_price.unwrap_or(1000.0).round().max(1.0) as i64;
             let purchase_cost = ((sales_price as f64) * 0.6).round().max(1.0) as i64;
 
@@ -241,6 +240,8 @@ fn build_input(
                 arrivals_by_day: arrivals,
                 reorder_point,
                 order_up_to,
+                moq,
+                lot_size,
                 lead_time_days: lead_time,
                 sales_unit_price: sales_price,
                 purchase_unit_cost: purchase_cost,

@@ -31,6 +31,7 @@ decision-pack/
   desktop-ui/
   reporting/
   spec/
+  db-migrate/
   data/
 ```
 
@@ -50,4 +51,5 @@ decision-pack/
 - `desktop-ui`: GUI
 - `reporting`: 図表生成
 - `spec`: 形式仕様
+- `db-migrate`: PostgreSQL migration runner
 - `db`: PostgreSQL の migration と seed 管理

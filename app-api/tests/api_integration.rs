@@ -6,10 +6,13 @@ use axum::{
 };
 use serde_json::{Value, json};
 use sqlx::{Executor, PgPool, postgres::PgPoolOptions};
+use std::sync::LazyLock;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::sync::Mutex;
 use tower::ServiceExt;
 
 const MIGRATION_SQL: &str = include_str!("../../db/migrations/202604172120_initial_schema.sql");
+static DB_TEST_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
 struct TestIds {
     customer_id: String,
@@ -20,6 +23,7 @@ struct TestIds {
 
 #[tokio::test]
 async fn db_backed_read_endpoints_return_seeded_rows() -> Result<(), Box<dyn std::error::Error>> {
+    let _guard = DB_TEST_LOCK.lock().await;
     let Some((pool, app)) = test_app().await? else {
         return Ok(());
     };
@@ -84,6 +88,7 @@ async fn db_backed_read_endpoints_return_seeded_rows() -> Result<(), Box<dyn std
 #[tokio::test]
 async fn post_simulation_persists_run_results_and_report() -> Result<(), Box<dyn std::error::Error>>
 {
+    let _guard = DB_TEST_LOCK.lock().await;
     let Some((pool, app)) = test_app().await? else {
         return Ok(());
     };

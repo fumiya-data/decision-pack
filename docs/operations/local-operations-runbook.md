@@ -46,13 +46,29 @@ createdb -U postgres decision_pack_app
 
 ## 5. Migration 適用
 
-現時点では migration runner は未実装である。そのため、初期 migration は `psql` で直接適用する。
+標準手順では `db-migrate` を使い、`db/migrations/` 配下の SQL をファイル名順に適用する。
+適用済み migration は DB の `schema_migrations` に記録され、同じ version は再実行時に skip される。
+同じ version の migration ファイル内容が変わった場合は checksum 不一致として失敗する。
+
+```powershell
+cargo run -p db-migrate -- --database-url $env:DATABASE_URL
+```
+
+標準以外の migration ディレクトリを使う場合:
+
+```powershell
+cargo run -p db-migrate -- `
+  --database-url $env:DATABASE_URL `
+  --migrations-dir db\migrations
+```
+
+一時的な fallback として、初期 migration を `psql` で直接適用することもできる。
 
 ```powershell
 psql $env:DATABASE_URL -f db\migrations\202604172120_initial_schema.sql
 ```
 
-この migration は `CREATE TABLE IF NOT EXISTS` と `CREATE INDEX IF NOT EXISTS` を使うため、同じローカル DB に再適用できる。
+ただし、AWS 化に向けた標準手順は `db-migrate` とする。
 
 ## 6. Smoke 規模の実行
 
@@ -298,6 +314,12 @@ reporting\python\.venv\Scripts\python.exe -m decision_report.cli `
 ```powershell
 cargo fmt --all --check
 cargo test --workspace
+```
+
+migration runner だけを確認する場合:
+
+```powershell
+cargo test -p db-migrate
 ```
 
 `app-api` の DB-backed 統合テストを実 DB に対して実行する場合は、専用の環境変数を設定する。

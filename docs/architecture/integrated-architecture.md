@@ -63,6 +63,9 @@ decision-pack/
   - `decision-engine` の JSON 出力を図表やテキストへ変換
 - `spec`
   - 仕様の正本
+- `db-migrate`
+  - `db/migrations/` 配下の PostgreSQL migration を順序付きで適用する
+  - 適用済み migration と checksum を `schema_migrations` に記録する
 
 ## 4. 全体構成図
 
