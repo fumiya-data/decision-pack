@@ -1,24 +1,86 @@
 use iced::widget::{button, column, container, row, scrollable, text, text_input};
-use iced::{Element, Length, Task, Theme};
+use iced::{Element, Font, Length, Task, Theme};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::collections::BTreeMap;
+use std::fs;
+use std::path::PathBuf;
+
+const DEFAULT_UI_FONT: Font = Font::with_name("Meiryo UI");
+const HAN_UI_FONT: Font = Font::with_name("Microsoft YaHei UI");
+const DEVANAGARI_UI_FONT: Font = Font::with_name("Nirmala UI");
 
 fn main() -> iced::Result {
-    iced::application("Decision Pack UI", update, view)
+    let mut application = iced::application("Decision Pack UI", update, view)
         .theme(|_| Theme::TokyoNight)
-        .run_with(|| {
-            let app = App::default();
-            let base = app.api_base_url.clone();
-            (
-                app,
-                Task::batch(vec![
-                    load_customers_task(base.clone()),
-                    load_items_task(base.clone(), String::new()),
-                    load_simulations_task(base),
-                ]),
-            )
-        })
+        .default_font(DEFAULT_UI_FONT);
+
+    for font_bytes in load_ui_font_bytes() {
+        application = application.font(font_bytes);
+    }
+
+    application.run_with(|| {
+        let app = App::default();
+        let base = app.api_base_url.clone();
+        (
+            app,
+            Task::batch(vec![
+                load_customers_task(base.clone()),
+                load_items_task(base.clone(), String::new()),
+                load_simulations_task(base),
+            ]),
+        )
+    })
+}
+
+fn load_ui_font_bytes() -> Vec<Vec<u8>> {
+    candidate_font_paths()
+        .into_iter()
+        .filter_map(|path| fs::read(path).ok())
+        .collect()
+}
+
+fn candidate_font_paths() -> Vec<PathBuf> {
+    let windows_dir = std::env::var_os("WINDIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(r"C:\Windows"));
+    let fonts_dir = windows_dir.join("Fonts");
+
+    ["meiryo.ttc", "NotoSansJP-VF.ttf", "msyh.ttc", "Nirmala.ttc"]
+        .into_iter()
+        .map(|name| fonts_dir.join(name))
+        .collect()
+}
+
+fn font_for_content(content: &str) -> Font {
+    if content.chars().any(is_devanagari_char) {
+        DEVANAGARI_UI_FONT
+    } else if content.chars().any(is_han_char) && !content.chars().any(is_japanese_kana) {
+        HAN_UI_FONT
+    } else {
+        DEFAULT_UI_FONT
+    }
+}
+
+fn is_devanagari_char(ch: char) -> bool {
+    let code = ch as u32;
+    (0x0900..=0x097f).contains(&code)
+        || (0x1cd0..=0x1cff).contains(&code)
+        || (0xa8e0..=0xa8ff).contains(&code)
+}
+
+fn is_han_char(ch: char) -> bool {
+    let code = ch as u32;
+    (0x3400..=0x4dbf).contains(&code)
+        || (0x4e00..=0x9fff).contains(&code)
+        || (0xf900..=0xfaff).contains(&code)
+}
+
+fn is_japanese_kana(ch: char) -> bool {
+    let code = ch as u32;
+    (0x3040..=0x309f).contains(&code)
+        || (0x30a0..=0x30ff).contains(&code)
+        || (0x31f0..=0x31ff).contains(&code)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -474,9 +536,10 @@ fn view(app: &App) -> Element<'_, Message> {
             .on_input(Message::ApiBaseUrlChanged)
             .padding(8)
             .width(Length::FillPortion(3)),
-        button("顧客再読込").on_press(Message::RefreshCustomers),
-        button("在庫再読込").on_press(Message::RefreshItems),
-        button("シミュレーション再読込").on_press(Message::RefreshSimulations),
+        button(text("顧客再読込").font(DEFAULT_UI_FONT)).on_press(Message::RefreshCustomers),
+        button(text("在庫再読込").font(DEFAULT_UI_FONT)).on_press(Message::RefreshItems),
+        button(text("シミュレーション再読込").font(DEFAULT_UI_FONT))
+            .on_press(Message::RefreshSimulations),
     ]
     .spacing(8);
 
@@ -543,7 +606,7 @@ fn customers_view(app: &App) -> Element<'_, Message> {
             customer.country.as_deref().unwrap_or("-")
         );
         list = list.push(
-            button(text(label))
+            button(text(label.clone()).font(font_for_content(&label)))
                 .width(Length::Fill)
                 .on_press(Message::SelectCustomer(customer.customer_id.clone())),
         );
@@ -598,7 +661,9 @@ fn customer_detail_panel(app: &App) -> Element<'_, Message> {
 
     scrollable(
         column![
-            text(format!("{} / {}", detail.customer_id, detail.full_name)),
+            text(format!("{} / {}", detail.customer_id, detail.full_name)).font(font_for_content(
+                &format!("{} / {}", detail.customer_id, detail.full_name),
+            )),
             text(format!(
                 "状態={} | tier={} | 国={}",
                 detail.status.as_deref().unwrap_or("-"),
@@ -617,12 +682,17 @@ fn customer_detail_panel(app: &App) -> Element<'_, Message> {
                 detail.order_count.unwrap_or_default(),
                 detail.last_purchase_date.as_deref().unwrap_or("-")
             )),
-            text(format!(
-                "地域={} / {} | 電話={}",
-                detail.region.as_deref().unwrap_or("-"),
-                detail.city.as_deref().unwrap_or("-"),
-                detail.phone.as_deref().unwrap_or("-")
-            )),
+            row![
+                text("地域=").font(DEFAULT_UI_FONT),
+                text(detail.region.as_deref().unwrap_or("-").to_string())
+                    .font(font_for_content(detail.region.as_deref().unwrap_or("-"))),
+                text(" / ").font(DEFAULT_UI_FONT),
+                text(detail.city.as_deref().unwrap_or("-").to_string())
+                    .font(font_for_content(detail.city.as_deref().unwrap_or("-"))),
+                text(" | 電話=").font(DEFAULT_UI_FONT),
+                text(detail.phone.as_deref().unwrap_or("-").to_string()).font(DEFAULT_UI_FONT),
+            ]
+            .spacing(4),
             text(format!("備考={}", detail.notes.as_deref().unwrap_or("-"))),
             purchases,
             next_buy,
@@ -638,24 +708,27 @@ fn inventory_view(app: &App) -> Element<'_, Message> {
             .on_input(Message::ItemQueryChanged)
             .padding(8)
             .width(Length::Fill),
-        button("検索").on_press(Message::RefreshItems),
+        button(text("検索").font(DEFAULT_UI_FONT)).on_press(Message::RefreshItems),
     ]
     .spacing(8);
 
     let mut list = column![list_header].spacing(8);
     for item in &app.items {
         list = list.push(
-            button(text(format!(
-                "{} | {} | {} | active={} | on_hand={} | on_order={} | reserved={} | {}",
-                item.item_id,
-                item.item_name,
-                item.category,
-                yes_no(Some(item.is_active)),
-                item.on_hand.unwrap_or_default(),
-                item.on_order.unwrap_or_default(),
-                item.reserved_qty.unwrap_or_default(),
-                item.updated_at.as_deref().unwrap_or("-")
-            )))
+            button(
+                text(format!(
+                    "{} | {} | {} | active={} | on_hand={} | on_order={} | reserved={} | {}",
+                    item.item_id,
+                    item.item_name,
+                    item.category,
+                    yes_no(Some(item.is_active)),
+                    item.on_hand.unwrap_or_default(),
+                    item.on_order.unwrap_or_default(),
+                    item.reserved_qty.unwrap_or_default(),
+                    item.updated_at.as_deref().unwrap_or("-")
+                ))
+                .font(DEFAULT_UI_FONT),
+            )
             .width(Length::Fill)
             .on_press(Message::SelectItem(item.item_id.clone())),
         );
@@ -734,25 +807,28 @@ fn item_detail_panel(app: &App) -> Element<'_, Message> {
 
 fn simulations_view(app: &App) -> Element<'_, Message> {
     let controls = row![
-        button("ベースライン実行").on_press(Message::RunSimulation),
-        button("一覧更新").on_press(Message::RefreshSimulations),
+        button(text("ベースライン実行").font(DEFAULT_UI_FONT)).on_press(Message::RunSimulation),
+        button(text("一覧更新").font(DEFAULT_UI_FONT)).on_press(Message::RefreshSimulations),
     ]
     .spacing(8);
 
     let mut list = column![controls].spacing(8);
     for simulation in &app.simulations {
         list = list.push(
-            button(text(format!(
-                "{} | {} | {} | {} | {} | {} | {} | {}",
-                simulation.run_id,
-                simulation.scenario_name,
-                simulation.scenario_id,
-                simulation.status,
-                simulation.requested_at,
-                simulation.completed_at.as_deref().unwrap_or("-"),
-                simulation.report_schema_version.as_deref().unwrap_or("-"),
-                simulation.report_uri.as_deref().unwrap_or("-")
-            )))
+            button(
+                text(format!(
+                    "{} | {} | {} | {} | {} | {} | {} | {}",
+                    simulation.run_id,
+                    simulation.scenario_name,
+                    simulation.scenario_id,
+                    simulation.status,
+                    simulation.requested_at,
+                    simulation.completed_at.as_deref().unwrap_or("-"),
+                    simulation.report_schema_version.as_deref().unwrap_or("-"),
+                    simulation.report_uri.as_deref().unwrap_or("-")
+                ))
+                .font(DEFAULT_UI_FONT),
+            )
             .width(Length::Fill)
             .on_press(Message::SelectSimulation(simulation.run_id.clone())),
         );
@@ -910,7 +986,7 @@ fn tab_button<'a>(label: &'a str, tab: Tab, active: Tab) -> Element<'a, Message>
     } else {
         label.to_string()
     };
-    button(text(caption))
+    button(text(caption).font(DEFAULT_UI_FONT))
         .on_press(Message::SwitchTab(tab))
         .into()
 }

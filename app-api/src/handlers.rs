@@ -15,9 +15,8 @@ use axum::{
 };
 use serde_json::Value;
 use sqlx::PgPool;
-
-fn pool(state: &AppState) -> Result<&PgPool, ApiError> {
-    state.pool.as_ref().ok_or(ApiError::DatabaseUnavailable)
+fn pool(state: &AppState) -> &PgPool {
+    &state.pool
 }
 
 pub async fn root(State(state): State<AppState>) -> Json<RootResponse> {
@@ -29,19 +28,14 @@ pub async fn root(State(state): State<AppState>) -> Json<RootResponse> {
 }
 
 pub async fn health(State(state): State<AppState>) -> Result<Json<HealthResponse>, ApiError> {
-    let database = if let Some(pool) = &state.pool {
-        sqlx::query_scalar::<_, i32>("SELECT 1")
-            .fetch_one(pool)
-            .await?;
-        "connected"
-    } else {
-        "disabled"
-    };
+    sqlx::query_scalar::<_, i32>("SELECT 1")
+        .fetch_one(pool(&state))
+        .await?;
 
     Ok(Json(HealthResponse {
         service: state.config.service_name,
         status: "ok",
-        database,
+        database: "connected",
     }))
 }
 
@@ -59,7 +53,7 @@ pub async fn list_customers(
     )
     .bind(pagination.limit())
     .bind(pagination.offset())
-    .fetch_all(pool(&state)?)
+    .fetch_all(pool(&state))
     .await?;
 
     Ok(Json(customers))
@@ -96,7 +90,7 @@ pub async fn get_customer(
         "#,
     )
     .bind(customer_id)
-    .fetch_optional(pool(&state)?)
+    .fetch_optional(pool(&state))
     .await?
     .ok_or(ApiError::NotFound("customer"))?;
 
@@ -130,7 +124,7 @@ pub async fn list_customer_purchases(
     .bind(customer_id)
     .bind(pagination.limit())
     .bind(pagination.offset())
-    .fetch_all(pool(&state)?)
+    .fetch_all(pool(&state))
     .await?;
 
     Ok(Json(purchases))
@@ -159,7 +153,7 @@ pub async fn list_customer_next_buy(
     .bind(customer_id)
     .bind(pagination.limit())
     .bind(pagination.offset())
-    .fetch_all(pool(&state)?)
+    .fetch_all(pool(&state))
     .await?;
 
     Ok(Json(next_buy))
@@ -194,7 +188,7 @@ pub async fn list_items(
     .bind(category)
     .bind(query.limit())
     .bind(query.offset())
-    .fetch_all(pool(&state)?)
+    .fetch_all(pool(&state))
     .await?;
 
     Ok(Json(items))
@@ -221,7 +215,7 @@ pub async fn get_item(
         "#,
     )
     .bind(item_id)
-    .fetch_optional(pool(&state)?)
+    .fetch_optional(pool(&state))
     .await?
     .ok_or(ApiError::NotFound("item"))?;
 
@@ -245,7 +239,7 @@ pub async fn get_item_inventory(
         "#,
     )
     .bind(item_id)
-    .fetch_optional(pool(&state)?)
+    .fetch_optional(pool(&state))
     .await?
     .ok_or(ApiError::NotFound("inventory"))?;
 
@@ -275,7 +269,7 @@ pub async fn get_item_risk(
         "#,
     )
     .bind(item_id)
-    .fetch_optional(pool(&state)?)
+    .fetch_optional(pool(&state))
     .await?
     .ok_or(ApiError::NotFound("item risk"))?;
 
@@ -304,7 +298,7 @@ pub async fn list_simulations(
     )
     .bind(pagination.limit())
     .bind(pagination.offset())
-    .fetch_all(pool(&state)?)
+    .fetch_all(pool(&state))
     .await?;
 
     Ok(Json(runs))
@@ -314,7 +308,7 @@ pub async fn create_simulation(
     State(state): State<AppState>,
     Json(request): Json<CreateSimulationRequest>,
 ) -> Result<Json<SimulationDetail>, ApiError> {
-    let simulation = simulation::run_and_store(pool(&state)?, request).await?;
+    let simulation = simulation::run_and_store(pool(&state), request).await?;
     Ok(Json(simulation))
 }
 
@@ -340,7 +334,7 @@ pub async fn get_simulation(
         "#,
     )
     .bind(run_id)
-    .fetch_optional(pool(&state)?)
+    .fetch_optional(pool(&state))
     .await?
     .ok_or(ApiError::NotFound("simulation"))?;
 
@@ -359,7 +353,7 @@ pub async fn get_simulation_report(
         "#,
     )
     .bind(&run_id)
-    .fetch_optional(pool(&state)?)
+    .fetch_optional(pool(&state))
     .await?
     .flatten()
     .ok_or(ApiError::NotFound("simulation report"))?;

@@ -19,7 +19,7 @@ use sqlx::PgPool;
 #[derive(Clone)]
 pub struct AppState {
     pub config: AppConfig,
-    pub pool: Option<PgPool>,
+    pub pool: PgPool,
 }
 
 pub fn build_app(state: AppState) -> Router {

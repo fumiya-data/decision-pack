@@ -14,22 +14,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let config = AppConfig::from_env();
-    let pool = if let Some(database_url) = &config.database_url {
-        Some(
-            PgPoolOptions::new()
-                .max_connections(5)
-                .connect(database_url)
-                .await?,
-        )
-    } else {
-        None
-    };
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&config.database_url)
+        .await?;
 
     let listener = TcpListener::bind(&config.bind_addr).await?;
     info!(
         service = %config.service_name,
         bind_addr = %config.bind_addr,
-        database_enabled = pool.is_some(),
+        database_url = %config.redacted_database_url(),
         "starting app-api"
     );
 

@@ -8,7 +8,6 @@ use serde::Serialize;
 #[derive(Debug)]
 pub enum ApiError {
     BadRequest(String),
-    DatabaseUnavailable,
     NotFound(&'static str),
     Internal(String),
 }
@@ -27,14 +26,6 @@ impl IntoResponse for ApiError {
                 Json(ErrorBody {
                     error: "bad_request",
                     message,
-                }),
-            )
-                .into_response(),
-            Self::DatabaseUnavailable => (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(ErrorBody {
-                    error: "database_unavailable",
-                    message: "database is not configured for app-api".to_string(),
                 }),
             )
                 .into_response(),

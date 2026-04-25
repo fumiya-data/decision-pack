@@ -2,6 +2,7 @@ use crate::{
     error::ApiError,
     models::{CreateSimulationRequest, SimulationDetail},
 };
+use chrono::{Duration, Utc};
 use decision_engine::report::json::to_json;
 use decision_engine::sim::runner::{ItemRunInput, ScenarioRunInput, run_scenario};
 use serde_json::Value;
@@ -49,7 +50,7 @@ pub async fn run_and_store(
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|err| ApiError::Internal(err.to_string()))?
-            .as_secs()
+            .as_nanos()
     );
 
     sqlx::query(
@@ -199,8 +200,13 @@ fn build_input(
         ));
     }
 
+    let start_date = Utc::now().date_naive();
     let days = (0..horizon_days)
-        .map(|day| format!("D+{:02}", day + 1))
+        .map(|day| {
+            (start_date + Duration::days(day as i64))
+                .format("%Y-%m-%d")
+                .to_string()
+        })
         .collect::<Vec<_>>();
 
     let inputs = items

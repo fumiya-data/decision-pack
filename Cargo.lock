@@ -108,11 +108,13 @@ name = "app-api"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "chrono",
  "decision-engine",
  "serde",
  "serde_json",
  "sqlx",
  "tokio",
+ "tower",
  "tracing",
  "tracing-subscriber",
 ]

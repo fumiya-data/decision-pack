@@ -46,7 +46,12 @@
 - `architecture/aws-runtime-architecture.md`
   - AWS 上での実行構成
 
-## 5. 意思決定記録
+## 5. 運用手順
+
+- `operations/local-operations-runbook.md`
+  - ローカルで DB 作成、migration、ETL、分析、API、GUI、reporting を一通り実行する手順
+
+## 6. 意思決定記録
 
 - `decisions/adr-0001-casing-and-document-layout.md`
   - 命名規則と文書配置ルール
@@ -63,8 +68,12 @@
 - `decisions/adr-0007-multi-source-ingestion-via-adapters-and-staging.md`
   - 複数データソース統合取込の基本方式
 
-## 6. 記録
+## 7. 記録
 
+- `progress/2026-04-25-1604-local-operations-runbook.md`
+  - ローカル運用 runbook を追加し、実行順と検証手順を文書化
+- `progress/2026-04-25-1630-app-api-hardening-and-integration-tests.md`
+  - `app-api` のログ redaction、simulation report 日付修正、DB-backed 統合テストを追加
 - `progress/2026-04-19-1016-full-sample-local-only-policy.md`
   - full 規模サンプルをローカル専用とし、Git と GitHub に反映しない方針を固定
 - `progress/2026-04-19-0950-multilingual-raw-customer-sample.md`
@@ -88,7 +97,7 @@
 - `backlog/open-items.md`
   - 未決事項と後回し項目
 
-## 7. 文書配置ルール
+## 8. 文書配置ルール
 
 - 新しい仕様書、計画書、設計書、進捗、運用手順、ADR は `docs/` 配下に置く。
 - 文書ファイル名と文書ディレクトリ名は英語の `kebab-case` に統一すること。
@@ -97,7 +106,7 @@
 - 言語仕様に制約があるコードファイルは各言語の標準規約に従うこと。
 - 過去文書は `archive/` 配下へ退避し、現行文書とは分離すること。
 
-## 8. アーカイブ
+## 9. アーカイブ
 
 - アーカイブ一覧は `archive/index.md` で管理すること。
 - 旧文書は `archive/2026-04-14-legacy-docs/` 配下へ退避すること。
