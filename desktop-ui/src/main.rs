@@ -1,5 +1,5 @@
 use iced::widget::{button, column, container, row, scrollable, text, text_input};
-use iced::{Element, Font, Length, Task, Theme};
+use iced::{Background, Border, Color, Degrees, Element, Font, Length, Shadow, Task, Theme, Vector};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::collections::BTreeMap;
@@ -9,6 +9,12 @@ use std::path::PathBuf;
 const DEFAULT_UI_FONT: Font = Font::with_name("Meiryo UI");
 const HAN_UI_FONT: Font = Font::with_name("Microsoft YaHei UI");
 const DEVANAGARI_UI_FONT: Font = Font::with_name("Nirmala UI");
+const TEXT_PRIMARY: Color = Color::from_rgb(0.93, 0.95, 1.0);
+const TEXT_MUTED: Color = Color::from_rgb(0.63, 0.68, 0.84);
+const PANEL_BG: Color = Color::from_rgba(0.055, 0.065, 0.14, 0.84);
+const BORDER_SUBTLE: Color = Color::from_rgba(0.55, 0.60, 1.0, 0.24);
+const ACCENT: Color = Color::from_rgb(0.58, 0.38, 1.0);
+const ACCENT_BRIGHT: Color = Color::from_rgb(0.25, 0.86, 1.0);
 
 fn main() -> iced::Result {
     let mut application = iced::application("Decision Pack UI", update, view)
@@ -531,15 +537,14 @@ fn update(app: &mut App, message: Message) -> Task<Message> {
 
 fn view(app: &App) -> Element<'_, Message> {
     let controls = row![
-        text("API"),
-        text_input("http://127.0.0.1:8080", &app.api_base_url)
+        label_text("API"),
+        styled_text_input("http://127.0.0.1:8080", &app.api_base_url)
             .on_input(Message::ApiBaseUrlChanged)
             .padding(8)
             .width(Length::FillPortion(3)),
-        button(text("顧客再読込").font(DEFAULT_UI_FONT)).on_press(Message::RefreshCustomers),
-        button(text("在庫再読込").font(DEFAULT_UI_FONT)).on_press(Message::RefreshItems),
-        button(text("シミュレーション再読込").font(DEFAULT_UI_FONT))
-            .on_press(Message::RefreshSimulations),
+        action_button("顧客再読込").on_press(Message::RefreshCustomers),
+        action_button("在庫再読込").on_press(Message::RefreshItems),
+        action_button("シミュレーション再読込").on_press(Message::RefreshSimulations),
     ]
     .spacing(8);
 
@@ -562,11 +567,24 @@ fn view(app: &App) -> Element<'_, Message> {
         Tab::Simulations => simulations_view(app),
     };
 
-    container(
-        column![controls, tabs, content, text(status)]
-            .spacing(12)
-            .padding(16),
-    )
+    let shell = column![
+        text("Decision Pack")
+            .font(DEFAULT_UI_FONT)
+            .size(28)
+            .style(|_| iced::widget::text::Style {
+                color: Some(TEXT_PRIMARY)
+            }),
+        label_text("ポートフォリオ向け業務データダッシュボード"),
+        glass_panel(controls),
+        tabs,
+        content,
+        label_text(status),
+    ]
+    .spacing(12)
+    .padding(20);
+
+    container(shell)
+        .style(space_background)
     .width(Length::Fill)
     .height(Length::Fill)
     .into()
@@ -591,7 +609,7 @@ fn customers_view(app: &App) -> Element<'_, Message> {
         .collect::<Vec<_>>();
 
     let mut list = column![
-        text_input("顧客フィルタ", &app.customer_query)
+        styled_text_input("顧客フィルタ", &app.customer_query)
             .on_input(Message::CustomerQueryChanged)
             .padding(8)
     ]
@@ -601,12 +619,12 @@ fn customers_view(app: &App) -> Element<'_, Message> {
             "{} | {} | {} | {} | {}",
             customer.customer_id,
             customer.full_name,
-            customer.status.as_deref().unwrap_or("-"),
-            customer.tier.as_deref().unwrap_or("-"),
-            customer.country.as_deref().unwrap_or("-")
+            status_label(customer.status.as_deref()),
+            tier_label(customer.tier.as_deref()),
+            country_label(customer.country.as_deref())
         );
         list = list.push(
-            button(text(label.clone()).font(font_for_content(&label)))
+            list_button(text(label.clone()).font(font_for_content(&label)))
                 .width(Length::Fill)
                 .on_press(Message::SelectCustomer(customer.customer_id.clone())),
         );
@@ -614,8 +632,8 @@ fn customers_view(app: &App) -> Element<'_, Message> {
 
     let detail = customer_detail_panel(app);
     row![
-        container(scrollable(list)).width(Length::FillPortion(2)),
-        container(detail).width(Length::FillPortion(3)),
+        glass_panel(scrollable(list)).width(Length::FillPortion(2)),
+        glass_panel(detail).width(Length::FillPortion(3)),
     ]
     .spacing(12)
     .into()
@@ -623,77 +641,81 @@ fn customers_view(app: &App) -> Element<'_, Message> {
 
 fn customer_detail_panel(app: &App) -> Element<'_, Message> {
     let Some(detail) = &app.customer_detail else {
-        return container(text("顧客を選択してください。"))
+        return container(label_text("顧客を選択してください。"))
             .width(Length::Fill)
             .into();
     };
 
-    let mut purchases = column![text("購入履歴")].spacing(4);
+    let mut purchases = column![section_title("購入履歴")].spacing(4);
     if app.customer_purchases.is_empty() {
-        purchases = purchases.push(text("- 購入履歴なし"));
+        purchases = purchases.push(body_text("- 購入履歴なし"));
     } else {
         for row in app.customer_purchases.iter().take(12) {
-            purchases = purchases.push(text(format!(
-                "{} | {} | {} ({}) x{} | unit={} | line={} | {}",
+            purchases = purchases.push(body_text(format!(
+                "{} | {} | {} ({}) x{} | 単価={} | 明細金額={} | {}",
                 row.ordered_at,
                 row.order_id,
-                row.item_name,
+                item_name_label(&row.item_name),
                 row.item_id,
                 row.quantity,
                 money_opt(row.unit_price),
                 money_opt(row.line_amount),
-                row.order_status
+                order_status_label(Some(row.order_status.as_str()))
             )));
         }
     }
 
-    let mut next_buy = column![text("次回購入候補")].spacing(4);
+    let mut next_buy = column![section_title("次回購入候補")].spacing(4);
     if app.customer_next_buy.is_empty() {
-        next_buy = next_buy.push(text("- 候補なし"));
+        next_buy = next_buy.push(body_text("- 候補なし"));
     } else {
         for row in app.customer_next_buy.iter().take(10) {
-            next_buy = next_buy.push(text(format!(
+            next_buy = next_buy.push(body_text(format!(
                 "#{} {} ({}) score={:.3} as_of={}",
-                row.rank, row.item_name, row.item_id, row.score, row.as_of
+                row.rank,
+                item_name_label(&row.item_name),
+                row.item_id,
+                row.score,
+                row.as_of
             )));
         }
     }
 
     scrollable(
         column![
-            text(format!("{} / {}", detail.customer_id, detail.full_name)).font(font_for_content(
+            section_title(format!("{} / {}", detail.customer_id, detail.full_name)).font(font_for_content(
                 &format!("{} / {}", detail.customer_id, detail.full_name),
             )),
-            text(format!(
-                "状態={} | tier={} | 国={}",
-                detail.status.as_deref().unwrap_or("-"),
-                detail.tier.as_deref().unwrap_or("-"),
-                detail.country.as_deref().unwrap_or("-")
+            body_text(format!(
+                "ステータス={} | 会員ランク={} | 国籍={}",
+                status_label(detail.status.as_deref()),
+                tier_label(detail.tier.as_deref()),
+                country_label(detail.country.as_deref())
             )),
-            text(format!(
-                "言語={} | 連絡先={} | マーケ可={}",
-                detail.preferred_language.as_deref().unwrap_or("-"),
+            body_text(format!(
+                "言語={} | 連絡先={} | マーケティング許可={}",
+                language_label(detail.preferred_language.as_deref()),
                 detail.email.as_deref().unwrap_or("-"),
                 yes_no(detail.marketing_opt_in)
             )),
-            text(format!(
+            body_text(format!(
                 "累計売上={} | 注文回数={} | 最終購入={}",
                 money_opt(detail.total_spend),
                 detail.order_count.unwrap_or_default(),
                 detail.last_purchase_date.as_deref().unwrap_or("-")
             )),
             row![
-                text("地域=").font(DEFAULT_UI_FONT),
+                body_text("地域=").font(DEFAULT_UI_FONT),
                 text(detail.region.as_deref().unwrap_or("-").to_string())
                     .font(font_for_content(detail.region.as_deref().unwrap_or("-"))),
-                text(" / ").font(DEFAULT_UI_FONT),
+                body_text(" / ").font(DEFAULT_UI_FONT),
                 text(detail.city.as_deref().unwrap_or("-").to_string())
                     .font(font_for_content(detail.city.as_deref().unwrap_or("-"))),
-                text(" | 電話=").font(DEFAULT_UI_FONT),
-                text(detail.phone.as_deref().unwrap_or("-").to_string()).font(DEFAULT_UI_FONT),
+                body_text(" | 電話=").font(DEFAULT_UI_FONT),
+                body_text(detail.phone.as_deref().unwrap_or("-").to_string()).font(DEFAULT_UI_FONT),
             ]
             .spacing(4),
-            text(format!("備考={}", detail.notes.as_deref().unwrap_or("-"))),
+            body_text(format!("備考={}", detail.notes.as_deref().unwrap_or("-"))),
             purchases,
             next_buy,
         ]
@@ -704,24 +726,24 @@ fn customer_detail_panel(app: &App) -> Element<'_, Message> {
 
 fn inventory_view(app: &App) -> Element<'_, Message> {
     let list_header = row![
-        text_input("品目検索", &app.item_query)
+        styled_text_input("品目検索", &app.item_query)
             .on_input(Message::ItemQueryChanged)
             .padding(8)
             .width(Length::Fill),
-        button(text("検索").font(DEFAULT_UI_FONT)).on_press(Message::RefreshItems),
+        action_button("検索").on_press(Message::RefreshItems),
     ]
     .spacing(8);
 
     let mut list = column![list_header].spacing(8);
     for item in &app.items {
         list = list.push(
-            button(
+            list_button(
                 text(format!(
-                    "{} | {} | {} | active={} | on_hand={} | on_order={} | reserved={} | {}",
+                    "{} | {} | カテゴリ={} | ステータス={} | 在庫数={} | 発注残={} | 引当数={} | 更新={}",
                     item.item_id,
-                    item.item_name,
-                    item.category,
-                    yes_no(Some(item.is_active)),
+                    item_name_label(&item.item_name),
+                    category_label(Some(item.category.as_str())),
+                    active_label(item.is_active),
                     item.on_hand.unwrap_or_default(),
                     item.on_order.unwrap_or_default(),
                     item.reserved_qty.unwrap_or_default(),
@@ -736,8 +758,8 @@ fn inventory_view(app: &App) -> Element<'_, Message> {
 
     let detail = item_detail_panel(app);
     row![
-        container(scrollable(list)).width(Length::FillPortion(2)),
-        container(detail).width(Length::FillPortion(3)),
+        glass_panel(scrollable(list)).width(Length::FillPortion(2)),
+        glass_panel(detail).width(Length::FillPortion(3)),
     ]
     .spacing(12)
     .into()
@@ -745,7 +767,7 @@ fn inventory_view(app: &App) -> Element<'_, Message> {
 
 fn item_detail_panel(app: &App) -> Element<'_, Message> {
     let Some(detail) = &app.item_detail else {
-        return container(text("品目を選択してください。"))
+        return container(label_text("品目を選択してください。"))
             .width(Length::Fill)
             .into();
     };
@@ -754,21 +776,21 @@ fn item_detail_panel(app: &App) -> Element<'_, Message> {
 
     container(
         column![
-            text(format!("{} / {}", detail.item_id, detail.item_name)),
-            text(format!(
-                "カテゴリ={} | active={} | UOM={}",
-                detail.category,
-                yes_no(Some(detail.is_active)),
+            section_title(format!("{} / {}", detail.item_id, item_name_label(&detail.item_name))),
+            body_text(format!(
+                "カテゴリ={} | ステータス={} | 単位={}",
+                category_label(Some(detail.category.as_str())),
+                active_label(detail.is_active),
                 detail.uom.as_deref().unwrap_or("-")
             )),
-            text(format!(
-                "lead_time={}日 | moq={} | lot_size={}",
+            body_text(format!(
+                "リードタイム={}日 | 最小発注数={} | ロットサイズ={}",
                 detail.lead_time_days,
                 detail.moq.unwrap_or_default(),
                 detail.lot_size.unwrap_or_default()
             )),
-            text(format!(
-                "在庫={} | 発注残={} | 引当={} | 更新={} | inventory_item={}",
+            body_text(format!(
+                "在庫数={} | 発注残={} | 引当数={} | 更新={} | 在庫品目={}",
                 inventory.map(|row| row.on_hand).unwrap_or_default(),
                 inventory.map(|row| row.on_order).unwrap_or_default(),
                 inventory.map(|row| row.reserved_qty).unwrap_or_default(),
@@ -779,10 +801,9 @@ fn item_detail_panel(app: &App) -> Element<'_, Message> {
                     .map(|row| row.item_id.as_str())
                     .unwrap_or(detail.item_id.as_str())
             )),
-            text(format!(
+            body_text(format!(
                 "最新リスク={} | 推奨補充={} | 想定欠品={} | 平均在庫日数={}",
-                risk.and_then(|row| row.risk_level.as_deref())
-                    .unwrap_or("未計算"),
+                risk_label(risk.and_then(|row| row.risk_level.as_deref())),
                 risk.and_then(|row| row.recommended_reorder_qty)
                     .unwrap_or_default(),
                 risk.and_then(|row| row.expected_stockout_qty)
@@ -792,12 +813,12 @@ fn item_detail_panel(app: &App) -> Element<'_, Message> {
                     .unwrap_or_else(|| "-".to_string())
             )),
             if let Some(risk) = risk {
-                text(format!(
-                    "参照 run={} / scenario={} ({}) / requested_at={}",
+                body_text(format!(
+                    "参照実行={} / シナリオ={} ({}) / 実行依頼日時={}",
                     risk.run_id, risk.scenario_name, risk.scenario_id, risk.requested_at
                 ))
             } else {
-                text("シミュレーション結果はまだありません。")
+                body_text("シミュレーション結果はまだありません。")
             },
         ]
         .spacing(8),
@@ -807,21 +828,21 @@ fn item_detail_panel(app: &App) -> Element<'_, Message> {
 
 fn simulations_view(app: &App) -> Element<'_, Message> {
     let controls = row![
-        button(text("ベースライン実行").font(DEFAULT_UI_FONT)).on_press(Message::RunSimulation),
-        button(text("一覧更新").font(DEFAULT_UI_FONT)).on_press(Message::RefreshSimulations),
+        action_button("ベースライン実行").on_press(Message::RunSimulation),
+        action_button("一覧更新").on_press(Message::RefreshSimulations),
     ]
     .spacing(8);
 
     let mut list = column![controls].spacing(8);
     for simulation in &app.simulations {
         list = list.push(
-            button(
+            list_button(
                 text(format!(
-                    "{} | {} | {} | {} | {} | {} | {} | {}",
+                    "{} | {} | {} | ステータス={} | 実行依頼日時={} | 完了日時={} | レポートスキーマ={} | レポートURI={}",
                     simulation.run_id,
-                    simulation.scenario_name,
+                    scenario_name_label(&simulation.scenario_name),
                     simulation.scenario_id,
-                    simulation.status,
+                    simulation_status_label(Some(simulation.status.as_str())),
                     simulation.requested_at,
                     simulation.completed_at.as_deref().unwrap_or("-"),
                     simulation.report_schema_version.as_deref().unwrap_or("-"),
@@ -836,8 +857,8 @@ fn simulations_view(app: &App) -> Element<'_, Message> {
 
     let detail = simulation_detail_panel(app);
     row![
-        container(scrollable(list)).width(Length::FillPortion(2)),
-        container(detail).width(Length::FillPortion(3)),
+        glass_panel(scrollable(list)).width(Length::FillPortion(2)),
+        glass_panel(detail).width(Length::FillPortion(3)),
     ]
     .spacing(12)
     .into()
@@ -845,7 +866,7 @@ fn simulations_view(app: &App) -> Element<'_, Message> {
 
 fn simulation_detail_panel(app: &App) -> Element<'_, Message> {
     let Some(detail) = &app.simulation_detail else {
-        return container(text("シミュレーションを選択してください。"))
+        return container(label_text("シミュレーションを選択してください。"))
             .width(Length::Fill)
             .into();
     };
@@ -853,13 +874,13 @@ fn simulation_detail_panel(app: &App) -> Element<'_, Message> {
     let report_summary = if let Some(report) = &app.simulation_report {
         let top_stockout = top_stockout_items(&report.inventory_series);
         column![
-            text(format!(
-                "schema={} | generated_at={}",
+            body_text(format!(
+                "スキーマ={} | 生成日時={}",
                 report.schema_version.as_deref().unwrap_or("-"),
                 report.generated_at
             )),
-            text(format!(
-                "cash期間={}..{} | total_inflow={} | total_outflow={} | final_cash={}",
+            body_text(format!(
+                "資金期間={}..{} | 総入金={} | 総出金={} | 最終残高={}",
                 report
                     .cash_series
                     .first()
@@ -874,21 +895,21 @@ fn simulation_detail_panel(app: &App) -> Element<'_, Message> {
                 with_commas(report.cash_series.iter().map(|row| row.outflow).sum::<i64>()),
                 with_commas(report.cash_series.last().map(|row| row.cash).unwrap_or_default())
             )),
-            text(format!(
-                "scenario={} | min_cash={} | total_stockout={} | stockout_rate={:.2}% | avg_days_on_hand={:.2}",
-                report.scenario.name,
+            body_text(format!(
+                "シナリオ={} | 最小現金残高={} | 総欠品数={} | 欠品率={:.2}% | 平均在庫日数={:.2}",
+                scenario_name_label(&report.scenario.name),
                 with_commas(report.kpi.min_cash),
                 report.kpi.total_stockout_qty,
                 report.kpi.stockout_rate * 100.0,
                 report.kpi.days_on_hand_avg
             )),
-            text(format!(
-                "cash points={} | inventory points={}",
+            body_text(format!(
+                "資金データ点数={} | 在庫データ点数={}",
                 report.cash_series.len(),
                 report.inventory_series.len()
             )),
-            text(format!(
-                "inventory期間={}..{} | total_demand={} | total_sold={}",
+            body_text(format!(
+                "在庫期間={}..{} | 総需要={} | 総販売数={}",
                 report
                     .inventory_series
                     .first()
@@ -902,30 +923,36 @@ fn simulation_detail_panel(app: &App) -> Element<'_, Message> {
                 report.inventory_series.iter().map(|row| row.demand).sum::<u32>(),
                 report.inventory_series.iter().map(|row| row.sold).sum::<u32>()
             )),
-            text("主要アラート"),
+            section_title("主要アラート"),
             alerts_view(&report.alerts),
-            text("欠品上位品目"),
+            section_title("欠品上位品目"),
             top_stockout,
         ]
         .spacing(6)
     } else {
-        column![text("レポート JSON はまだありません。")].spacing(6)
+        column![body_text("レポート JSON はまだありません。")].spacing(6)
     };
 
     scrollable(
         column![
-            text(format!("run={} / {}", detail.run_id, detail.scenario_name)),
-            text(format!(
-                "status={} | requested_at={} | report_available={}",
-                detail.status, detail.requested_at, detail.report_available
+            section_title(format!(
+                "実行ID={} / {}",
+                detail.run_id,
+                scenario_name_label(&detail.scenario_name)
             )),
-            text(format!(
-                "started_at={} | completed_at={}",
+            body_text(format!(
+                "ステータス={} | 実行依頼日時={} | レポート利用可={}",
+                simulation_status_label(Some(detail.status.as_str())),
+                detail.requested_at,
+                yes_no(Some(detail.report_available))
+            )),
+            body_text(format!(
+                "開始日時={} | 完了日時={}",
                 detail.started_at.as_deref().unwrap_or("-"),
                 detail.completed_at.as_deref().unwrap_or("-")
             )),
-            text(format!(
-                "schema={} | report_uri={} | scenario_id={}",
+            body_text(format!(
+                "スキーマ={} | レポートURI={} | シナリオID={}",
                 detail.report_schema_version.as_deref().unwrap_or("-"),
                 detail.report_uri.as_deref().unwrap_or("-"),
                 detail.scenario_id
@@ -940,13 +967,13 @@ fn simulation_detail_panel(app: &App) -> Element<'_, Message> {
 fn alerts_view(alerts: &[Alert]) -> iced::widget::Column<'_, Message> {
     let mut col = column![].spacing(4);
     if alerts.is_empty() {
-        return col.push(text("- アラートなし"));
+        return col.push(body_text("- アラートなし"));
     }
     for alert in alerts.iter().take(8) {
-        col = col.push(text(format!(
+        col = col.push(body_text(format!(
             "{} | {} | {} | {} | {}",
             alert.date,
-            alert.severity,
+            severity_label(Some(alert.severity.as_str())),
             alert.code,
             alert.item_id.as_deref().unwrap_or("-"),
             alert.message
@@ -969,11 +996,11 @@ fn top_stockout_items(rows: &[InventoryPoint]) -> iced::widget::Column<'_, Messa
 
     let mut col = column![].spacing(4);
     if ranked.is_empty() {
-        return col.push(text("- データなし"));
+        return col.push(body_text("- データなし"));
     }
     for (item_id, (stockout, on_hand, on_order)) in ranked.into_iter().take(8) {
-        col = col.push(text(format!(
-            "{} | stockout={} | on_hand_sum={} | on_order_sum={}",
+        col = col.push(body_text(format!(
+            "{} | 欠品数={} | 在庫数合計={} | 発注残合計={}",
             item_id, stockout, on_hand, on_order
         )));
     }
@@ -981,12 +1008,7 @@ fn top_stockout_items(rows: &[InventoryPoint]) -> iced::widget::Column<'_, Messa
 }
 
 fn tab_button<'a>(label: &'a str, tab: Tab, active: Tab) -> Element<'a, Message> {
-    let caption = if tab == active {
-        format!("[{}]", label)
-    } else {
-        label.to_string()
-    };
-    button(text(caption).font(DEFAULT_UI_FONT))
+    tab_styled_button(text(label.to_string()).font(DEFAULT_UI_FONT), tab == active)
         .on_press(Message::SwitchTab(tab))
         .into()
 }
@@ -1179,8 +1201,346 @@ fn money_opt(value: Option<f64>) -> String {
 
 fn yes_no(value: Option<bool>) -> &'static str {
     match value {
-        Some(true) => "yes",
-        Some(false) => "no",
+        Some(true) => "はい",
+        Some(false) => "いいえ",
         None => "-",
     }
+}
+
+fn country_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "Japan" => "日本".to_string(),
+        "China" => "中国".to_string(),
+        "India" => "インド".to_string(),
+        "United States" => "アメリカ合衆国".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn language_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "ja" | "ja-JP" => "日本語".to_string(),
+        "en" => "英語".to_string(),
+        "en-US" => "英語（米国）".to_string(),
+        "zh" => "中国語".to_string(),
+        "zh-CN" => "中国語（簡体字）".to_string(),
+        "hi" => "ヒンディー語".to_string(),
+        "fr-FR" => "フランス語".to_string(),
+        "ar" | "ar-SA" => "アラビア語".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn status_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "active" => "アクティブ".to_string(),
+        "inactive" => "非アクティブ".to_string(),
+        "pending" => "保留中".to_string(),
+        "banned" => "利用停止".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn tier_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "bronze" => "ブロンズ".to_string(),
+        "silver" => "シルバー".to_string(),
+        "gold" => "ゴールド".to_string(),
+        "platinum" => "プラチナ".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn category_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "apparel" => "アパレル".to_string(),
+        "beauty" => "ビューティー".to_string(),
+        "electronics" => "エレクトロニクス".to_string(),
+        "food" => "食品".to_string(),
+        "home" => "ホーム".to_string(),
+        "office" => "オフィス".to_string(),
+        "outdoor" => "アウトドア".to_string(),
+        "pet" => "ペット".to_string(),
+        "sports" => "スポーツ".to_string(),
+        "test" => "テスト".to_string(),
+        "wellness" => "ウェルネス".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn item_name_label(value: &str) -> String {
+    let Some((category, number)) = value.split_once(" product ") else {
+        return value.to_string();
+    };
+
+    let category = category_label(Some(category));
+    if category == "-" {
+        value.to_string()
+    } else {
+        format!("{category}商品 {number}")
+    }
+}
+
+fn active_label(value: bool) -> &'static str {
+    if value { "アクティブ" } else { "非アクティブ" }
+}
+
+fn order_status_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "pending" => "保留中".to_string(),
+        "paid" => "支払済み".to_string(),
+        "shipped" => "発送済み".to_string(),
+        "completed" => "完了".to_string(),
+        "cancelled" | "canceled" => "キャンセル".to_string(),
+        "returned" => "返品".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn simulation_status_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "running" => "実行中".to_string(),
+        "succeeded" => "成功".to_string(),
+        "failed" => "失敗".to_string(),
+        "queued" => "待機中".to_string(),
+        "cancelled" | "canceled" => "キャンセル".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn scenario_name_label(value: &str) -> String {
+    match value {
+        "Integration Test Baseline" => "統合テスト ベースライン".to_string(),
+        "Baseline Docker" => "Docker ベースライン".to_string(),
+        "Baseline Local" => "ローカル ベースライン".to_string(),
+        "full dataset verification run" => "全件データ検証実行".to_string(),
+        other if other.contains("Baseline") => other.replace("Baseline", "ベースライン"),
+        other => other.to_string(),
+    }
+}
+
+fn risk_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "low" => "低リスク".to_string(),
+        "medium" => "中リスク".to_string(),
+        "high" => "高リスク".to_string(),
+        "critical" => "重大リスク".to_string(),
+        "-" | "" => "未計算".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn severity_label(value: Option<&str>) -> String {
+    match value.unwrap_or("-") {
+        "info" => "情報".to_string(),
+        "warning" | "warn" => "警告".to_string(),
+        "error" => "エラー".to_string(),
+        "critical" => "重大".to_string(),
+        "-" | "" => "-".to_string(),
+        other => other.to_string(),
+    }
+}
+
+fn space_background(_theme: &Theme) -> iced::widget::container::Style {
+    iced::widget::container::Style {
+        text_color: Some(TEXT_PRIMARY),
+        background: Some(Background::Gradient(
+            iced::gradient::Linear::new(Degrees(135.0))
+                .add_stop(0.0, Color::from_rgb(0.015, 0.018, 0.050))
+                .add_stop(0.34, Color::from_rgb(0.065, 0.045, 0.190))
+                .add_stop(0.68, Color::from_rgb(0.025, 0.100, 0.170))
+                .add_stop(1.0, Color::from_rgb(0.008, 0.010, 0.026))
+                .into(),
+        )),
+        border: Border::default(),
+        shadow: Shadow::default(),
+    }
+}
+
+fn panel_style(_theme: &Theme) -> iced::widget::container::Style {
+    iced::widget::container::Style {
+        text_color: Some(TEXT_PRIMARY),
+        background: Some(Background::Color(PANEL_BG)),
+        border: Border {
+            radius: 8.0.into(),
+            width: 1.0,
+            color: BORDER_SUBTLE,
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.35),
+            offset: Vector::new(0.0, 12.0),
+            blur_radius: 28.0,
+        },
+    }
+}
+
+fn glass_panel<'a>(
+    content: impl Into<Element<'a, Message>>,
+) -> iced::widget::Container<'a, Message> {
+    container(content).padding(12).style(panel_style)
+}
+
+fn input_style(_theme: &Theme, status: iced::widget::text_input::Status) -> iced::widget::text_input::Style {
+    let border_color = match status {
+        iced::widget::text_input::Status::Focused => ACCENT_BRIGHT,
+        iced::widget::text_input::Status::Hovered => Color::from_rgba(0.70, 0.76, 1.0, 0.48),
+        _ => BORDER_SUBTLE,
+    };
+
+    iced::widget::text_input::Style {
+        background: Background::Color(Color::from_rgba(0.035, 0.040, 0.095, 0.92)),
+        border: Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: border_color,
+        },
+        icon: TEXT_MUTED,
+        placeholder: TEXT_MUTED,
+        value: TEXT_PRIMARY,
+        selection: ACCENT,
+    }
+}
+
+fn styled_text_input<'a>(
+    placeholder: &'a str,
+    value: &'a str,
+) -> iced::widget::TextInput<'a, Message> {
+    text_input(placeholder, value).style(input_style)
+}
+
+fn button_style(_theme: &Theme, status: iced::widget::button::Status) -> iced::widget::button::Style {
+    let (background, border, text_color) = match status {
+        iced::widget::button::Status::Hovered => (
+            Color::from_rgba(0.43, 0.30, 0.95, 0.96),
+            ACCENT_BRIGHT,
+            Color::WHITE,
+        ),
+        iced::widget::button::Status::Pressed => (
+            Color::from_rgba(0.24, 0.18, 0.70, 0.98),
+            ACCENT,
+            Color::WHITE,
+        ),
+        iced::widget::button::Status::Disabled => (
+            Color::from_rgba(0.10, 0.11, 0.18, 0.65),
+            BORDER_SUBTLE,
+            TEXT_MUTED,
+        ),
+        iced::widget::button::Status::Active => (
+            Color::from_rgba(0.20, 0.16, 0.48, 0.95),
+            Color::from_rgba(0.78, 0.68, 1.0, 0.36),
+            TEXT_PRIMARY,
+        ),
+    };
+
+    iced::widget::button::Style {
+        background: Some(Background::Color(background)),
+        text_color,
+        border: Border {
+            radius: 7.0.into(),
+            width: 1.0,
+            color: border,
+        },
+        shadow: Shadow {
+            color: Color::from_rgba(0.0, 0.0, 0.0, 0.28),
+            offset: Vector::new(0.0, 4.0),
+            blur_radius: 12.0,
+        },
+    }
+}
+
+fn list_button_style(_theme: &Theme, status: iced::widget::button::Status) -> iced::widget::button::Style {
+    let background = match status {
+        iced::widget::button::Status::Hovered => Color::from_rgba(0.20, 0.24, 0.46, 0.95),
+        iced::widget::button::Status::Pressed => Color::from_rgba(0.16, 0.18, 0.36, 0.98),
+        _ => Color::from_rgba(0.10, 0.13, 0.26, 0.82),
+    };
+
+    iced::widget::button::Style {
+        background: Some(Background::Color(background)),
+        text_color: TEXT_PRIMARY,
+        border: Border {
+            radius: 6.0.into(),
+            width: 1.0,
+            color: BORDER_SUBTLE,
+        },
+        shadow: Shadow::default(),
+    }
+}
+
+fn tab_button_style(active: bool) -> impl Fn(&Theme, iced::widget::button::Status) -> iced::widget::button::Style {
+    move |_theme, status| {
+        let background = if active {
+            match status {
+                iced::widget::button::Status::Hovered => Color::from_rgba(0.30, 0.42, 0.95, 0.96),
+                _ => Color::from_rgba(0.44, 0.24, 0.95, 0.95),
+            }
+        } else {
+            match status {
+                iced::widget::button::Status::Hovered => Color::from_rgba(0.16, 0.20, 0.38, 0.94),
+                _ => Color::from_rgba(0.07, 0.09, 0.18, 0.78),
+            }
+        };
+
+        iced::widget::button::Style {
+            background: Some(Background::Color(background)),
+            text_color: TEXT_PRIMARY,
+            border: Border {
+                radius: 7.0.into(),
+                width: 1.0,
+                color: if active { ACCENT_BRIGHT } else { BORDER_SUBTLE },
+            },
+            shadow: Shadow::default(),
+        }
+    }
+}
+
+fn action_button<'a>(label: &'a str) -> iced::widget::Button<'a, Message> {
+    button(text(label).font(DEFAULT_UI_FONT))
+        .padding([8, 12])
+        .style(button_style)
+}
+
+fn list_button<'a>(content: impl Into<Element<'a, Message>>) -> iced::widget::Button<'a, Message> {
+    button(content).padding([9, 10]).style(list_button_style)
+}
+
+fn tab_styled_button<'a>(
+    content: impl Into<Element<'a, Message>>,
+    active: bool,
+) -> iced::widget::Button<'a, Message> {
+    button(content).padding([9, 14]).style(tab_button_style(active))
+}
+
+fn label_text<'a>(content: impl Into<String>) -> iced::widget::Text<'a> {
+    text(content.into())
+        .font(DEFAULT_UI_FONT)
+        .size(15)
+        .style(|_| iced::widget::text::Style {
+            color: Some(TEXT_MUTED),
+        })
+}
+
+fn body_text<'a>(content: impl Into<String>) -> iced::widget::Text<'a> {
+    text(content.into())
+        .font(DEFAULT_UI_FONT)
+        .size(15)
+        .style(|_| iced::widget::text::Style {
+            color: Some(TEXT_PRIMARY),
+        })
+}
+
+fn section_title<'a>(content: impl Into<String>) -> iced::widget::Text<'a> {
+    text(content.into())
+        .font(DEFAULT_UI_FONT)
+        .size(17)
+        .style(|_| iced::widget::text::Style {
+            color: Some(Color::from_rgb(0.82, 0.88, 1.0)),
+        })
 }

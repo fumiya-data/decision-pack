@@ -8,7 +8,7 @@
 
 このプロジェクトでは `customers-etl`、`commerce-etl`、`purchase-insights`、`app-api` が共通の PostgreSQL を扱う。
 スキーマ変更をコード実装や ORM 定義に埋め込むと、変更履歴の追跡、再現、レビューが難しくなる。
-個人開発でも、環境再構築と将来の AWS 移行に耐える migration 方式を先に固定したい。
+個人開発でも、環境再構築と将来の Kubernetes 移行に耐える migration 方式を先に固定したい。
 
 ## 決定事項
 
@@ -21,5 +21,5 @@
 ## 影響
 
 - DB 変更は必ず SQL ファイルとしてレビューできる
-- ローカルと AWS の両方で同じ migration を再利用できる
+- ローカルと Kubernetes の両方で同じ migration を再利用できる
 - DB の初期化や再構築が容易になる

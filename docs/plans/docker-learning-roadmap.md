@@ -5,7 +5,7 @@
 このロードマップは、Decision Pack を題材にして Docker を実務的に習熟するための順序を固定する。
 抽象的な Docker 学習ではなく、PostgreSQL、migration、ETL、分析、API、reporting を Docker でローカル運用できることを第一目標にする。
 
-AWS 実装へ進む前に、同じコンテナイメージと同じ環境変数でローカル再現できる状態を作る。
+Kubernetes staging 実装へ進む前に、同じコンテナイメージと同じ環境変数でローカル再現できる状態を作る。
 
 ## 2. 到達目標
 
@@ -149,15 +149,15 @@ Docker ローカル運用の最初の完了条件は次の通り。
 - `decision-engine-report` と `reporting-smoke` が `out/` に成果物を生成する
 - reset 手順として `docker compose down -v` の意味を理解している
 
-## 5. AWS への接続
+## 5. Kubernetes staging への接続
 
-Docker 習熟後に AWS 方針へ進む。
-最初は無料運用前提のため、EKS や NAT Gateway のような固定費が出やすい構成には進まない。
+Docker 習熟後に Kubernetes staging 方針へ進む。
+最初は無料運用前提のため、EKS や NAT Gateway のような固定費が出やすい managed cloud 構成には進まない。
 
-Docker 側で固めた成果は、次の AWS 検討に使う。
+Docker 側で固めた成果は、次の Kubernetes 検討に使う。
 
-- `app-api` image を ECR へ push できるか
-- migration を ECS task / EC2 one-shot / CI のどこで実行するか
-- DB を RDS PostgreSQL に分離するか
-- secrets を Parameter Store Standard tier で扱えるか
-- CloudWatch logs を最小量に抑えられるか
+- `app-api` image を Kubernetes Deployment として起動できるか
+- migration を Kubernetes Job として実行できるか
+- PostgreSQL を staging 用の PersistentVolume で保持できるか
+- secrets を Kubernetes Secret として扱えるか
+- `kubectl logs` で最小限の障害調査ができるか

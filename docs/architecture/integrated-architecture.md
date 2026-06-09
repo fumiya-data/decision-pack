@@ -8,13 +8,13 @@
 - 商品品目、購入履歴、在庫を一貫して扱う
 - 顧客ごとの次回購入候補を確率的に推定する
 - 需要予測を踏まえて在庫リスクを評価する
-- GUI を薄いクライアントに寄せ、将来は AWS 上の API とジョブ基盤を使う
+- GUI を薄いクライアントに寄せ、将来は Kubernetes 上の API とジョブ基盤を使う
 
 ## 2. 設計原則
 
 - `decision-engine` は意思決定計算専用とし、顧客個票の管理や一覧検索の責務を持たせない
 - 顧客整形、業務データ取込、購入傾向推定、意思決定計算、GUI/API は別モジュールに分ける
-- GUI は AWS の個別サービスを直接叩かず、必ず `app-api` を介して情報を取得する
+- GUI は Kubernetes 内部の個別サービスを直接叩かず、必ず `app-api` を介して情報を取得する
 - 顧客個票は分析系で扱い、`decision-engine` へ渡すのは `item_id` 単位の集約済み需要情報だけにする
 - DB の schema と問い合わせ意味は SQL と仕様書で明示的に管理する
 - ドキュメントの正本は `docs/` 配下に置く
@@ -85,7 +85,7 @@ flowchart LR
     end
 
     subgraph Data["永続層"]
-        S3["S3\n raw / artifacts"]
+        Artifacts["Object storage / shared volume\n raw / artifacts"]
         Pg["PostgreSQL\n 業務データ"]
     end
 
@@ -98,9 +98,9 @@ flowchart LR
     RawCommerce --> CommerceEtl
 
     CustomersEtl --> Pg
-    CustomersEtl --> S3
+    CustomersEtl --> Artifacts
     CommerceEtl --> Pg
-    CommerceEtl --> S3
+    CommerceEtl --> Artifacts
 
     Pg --> Insights
     Insights --> Pg
@@ -108,13 +108,13 @@ flowchart LR
 
     Pg --> Engine
     Engine --> Pg
-    Engine --> S3
+    Engine --> Artifacts
     Engine --> Reporting
 
     Pg --> Api
-    S3 --> Api
+    Artifacts --> Api
     Api --> Ui
-    Reporting --> S3
+    Reporting --> Artifacts
 ```
 
 ## 5. データ境界
@@ -306,7 +306,7 @@ GUI は薄いラッパに寄せ、表示と操作に専念させます。
 ### 9.3 API の原則
 
 - GUI はこの API しか見ません
-- API は DB と S3 とジョブ起動の調停役です
+- API は DB、成果物ストレージ、ジョブ起動の調停役です
 - 長時間処理は同期応答で完了を待たず、`job_id` や `run_id` を返します
 
 ### 9.4 `app-api` の実装技術
@@ -317,33 +317,32 @@ GUI は薄いラッパに寄せ、表示と操作に専念させます。
 - ORM は採用しない
 - DB 操作は原則として手書き SQL で行う
 
-## 10. AWS での配置
+## 10. Kubernetes staging での配置
 
 ### 10.1 推奨構成
 
-- `S3`
-  - 生データと成果物の保管
-- `RDS for PostgreSQL`
-  - 業務データと分析結果の保管
-- `API Gateway`
-  - GUI の入口
-- `Lambda`
-  - 軽い API ハンドラ
-- `Step Functions`
-  - ジョブオーケストレーション
-- `ECS/Fargate`
-  - `customers-etl`, `commerce-etl`, `purchase-insights`, `decision-engine` の実行
-- `EventBridge Scheduler`
-  - 夜間バッチ起動
-- `CloudWatch`
-  - ログと障害監視
+- `Deployment`
+  - `app-api` を常時起動する
+- `Job`
+  - `customers-etl`, `commerce-etl`, `purchase-insights`, `decision-engine`, `reporting` を一回実行する
+- `CronJob`
+  - 夜間バッチや定期更新を起動する
+- `Service`
+  - GUI または port-forward から `app-api` へ到達する入口にする
+- `ConfigMap` / `Secret`
+  - DB 接続情報、入力パス、実行モードなどを注入する
+- `PersistentVolume`
+  - PostgreSQL データ、raw データ、成果物を無料運用の範囲で保持する
+- `kubectl logs`
+  - staging 段階のログ確認手段にする
 
 ### 10.2 なぜこの構成にするか
 
 - GUI を薄いクライアントに保てる
 - ETL や `decision-engine` を長時間バッチとして扱える
 - 再実行、監査、失敗追跡をしやすい
-- 将来の負荷増加に対応しやすい
+- Docker Compose で固めた container 単位をそのまま staging へ移しやすい
+- 固定費が出やすい managed cloud 構成を避け、無料運用で検証しやすい
 
 ## 11. 実装フェーズ
 
@@ -367,8 +366,8 @@ GUI は薄いラッパに寄せ、表示と操作に専念させます。
 
 ### フェーズ 4
 
-- `customers-etl`, `commerce-etl`, `purchase-insights`, `decision-engine` を AWS ジョブへ移す
-- GUI を AWS API 利用前提へ切り替える
+- `customers-etl`, `commerce-etl`, `purchase-insights`, `decision-engine` を Kubernetes Job へ移す
+- GUI を Kubernetes staging 上の `app-api` 利用前提へ切り替える
 
 ## 12. 実装チケットの粒度
 
@@ -407,18 +406,18 @@ GUI は薄いラッパに寄せ、表示と操作に専念させます。
 3. 在庫リスクと補充提案の出力追加
 4. `simulation_report_v0.1` の拡張
 
-### 12.5 AWS
+### 12.5 Kubernetes staging
 
-1. `app-api` の Lambda 化
+1. `app-api` の Deployment 化
 2. ジョブ起動 API と `job_id` 追跡
-3. `ECS/Fargate` 実行基盤
-4. `Step Functions` の状態機械
-5. `EventBridge Scheduler` の夜間実行
+3. ETL、分析、シミュレーションの Job 化
+4. 定期実行用 CronJob
+5. ConfigMap、Secret、PersistentVolume の整理
 
 ## 13. 今すぐ変えないこと
 
 - `decision-engine` に顧客個票を入れない
-- GUI から DB や S3 を直接読まない
+- GUI から DB や成果物ストレージを直接読まない
 - 顧客推薦ロジックを最初から複雑な機械学習にしない
 - 既存の `simulation_report_v0.1` 契約を不用意に壊さない
 - 高度な推薦アルゴリズムへの移行は、データ量と業務指標の両方を満たしたときだけ検討する

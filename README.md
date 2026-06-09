@@ -1,10 +1,10 @@
 # Decision Pack
 
-Decision Pack は、顧客データ、購入履歴、在庫、需要予測、意思決定支援を一貫して扱うことを目的とした、開発中の個人プロジェクトです。
+Decision Pack は、顧客データ、購入履歴、商品・在庫、需要予測、資金シミュレーションをつなげ、次に取るべき仕入れ・販売・在庫判断を支援するローカル実行型の意思決定支援プロジェクトです。
 
-現在は、ローカル実行基盤と Docker Compose によるローカル運用手順の整備が完了し、AWS に持ち上げるための準備段階にあります。
-PostgreSQL、migration、ETL、購入傾向分析、API、デスクトップ GUI、reporting は、host 実行または Docker Compose で一通り確認できる状態です。
-次のマイルストーンは、無料運用を前提にした AWS staging 構成の設計と実装です。
+現在は、PostgreSQL、migration、ETL、購入傾向分析、API、デスクトップ GUI、reporting を host 実行または Docker Compose で確認できる状態です。次のマイルストーンは、無料運用を前提にした Kubernetes staging 構成の設計と実装です。
+
+このリポジトリでは、仕様、アーキテクチャ、ADR、運用手順を `docs/` に集約し、実装をそれらの文書に追従させる仕様駆動開発を採用しています。
 
 ## 最初に読む文書
 
@@ -40,9 +40,9 @@ PostgreSQL、migration、ETL、購入傾向分析、API、デスクトップ GUI
 仕様駆動開発として、文書は次の役割を持ちます。
 
 - [docs/specs/](docs/specs/) では、製品、データ契約、機能要件、非機能要件、評価用サンプル仕様を定義します。
-- [docs/architecture/](docs/architecture/) では、モジュール責務、ディレクトリ構成、AWS を含む実行構成の設計を定義します。
+- [docs/architecture/](docs/architecture/) では、モジュール責務、ディレクトリ構成、Kubernetes staging を含む実行構成の設計を定義します。
 - [docs/decisions/](docs/decisions/) では、開発途中に行った技術判断を ADR として固定します。
-- [docs/operations/](docs/operations/) では、ローカル運用、Docker 運用、将来の AWS 運用の実行手順を固定します。
+- [docs/operations/](docs/operations/) では、ローカル運用、Docker 運用、将来の Kubernetes 運用の実行手順を固定します。
 - [docs/progress/](docs/progress/) では、完了したタスク、確認事項等を時刻付きで記録します。
 - [docs/backlog/](docs/backlog/) では、未決事項を管理します。
 
@@ -56,4 +56,4 @@ PostgreSQL、migration、ETL、購入傾向分析、API、デスクトップ GUI
 Docker Compose での実行は [docs/operations/docker-local-runbook.md](docs/operations/docker-local-runbook.md) を参照します。
 
 Docker では、PostgreSQL、migration、ETL、purchase-insights、app-api、decision-engine report、Python reporting をローカル環境で再現できるようにしています。
-この Docker ローカル運用を AWS 移行前の実行基盤の基準にしています。
+この Docker ローカル運用を Kubernetes staging 移行前の実行基盤の基準にしています。

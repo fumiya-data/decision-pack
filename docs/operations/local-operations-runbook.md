@@ -5,7 +5,7 @@
 この runbook は、Decision Pack をローカル環境で一通り動かすための運用手順を固定する。
 対象は、PostgreSQL の作成、migration、顧客 ETL、商取引 ETL、サンプル生成、購入傾向分析、API、GUI、reporting である。
 
-この文書は、開発者が同じ順序で再実行できることを目的とする。AWS 化や自動ジョブ化の前段階では、この手順を正本として扱う。
+この文書は、開発者が同じ順序で再実行できることを目的とする。Kubernetes staging 化や自動ジョブ化の前段階では、この手順を正本として扱う。
 
 ## 2. 前提
 
@@ -68,7 +68,7 @@ cargo run -p db-migrate -- `
 psql $env:DATABASE_URL -f db\migrations\202604172120_initial_schema.sql
 ```
 
-ただし、AWS 化に向けた標準手順は `db-migrate` とする。
+ただし、Kubernetes staging 化に向けた標準手順は `db-migrate` とする。
 
 ## 6. Smoke 規模の実行
 

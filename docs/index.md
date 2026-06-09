@@ -45,8 +45,8 @@
   - モジュール責務と境界の図
 - `architecture/directory-layout.md`
   - 最終的に採用するディレクトリ構造
-- `architecture/aws-runtime-architecture.md`
-  - AWS 上での実行構成
+- `architecture/kubernetes-staging-architecture.md`
+  - 無料運用を前提にした Kubernetes staging 実行構成
 
 ## 5. 運用手順
 

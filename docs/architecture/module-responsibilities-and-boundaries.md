@@ -101,7 +101,7 @@ flowchart TB
 
     Forbidden["禁止事項"]:::warn
     Forbidden --- F1["顧客個票を decision-engine へ直接渡さない"]
-    Forbidden --- F2["desktop-ui から DB や S3 を直接参照しない"]
+    Forbidden --- F2["desktop-ui から DB や成果物ストレージを直接参照しない"]
     Forbidden --- F3["reporting が decision-engine の内部計算へ依存しない"]
 
     classDef warn fill:#fff4d6,stroke:#b7791f,color:#5f370e;
@@ -160,9 +160,9 @@ flowchart TB
 - `desktop-ui` は `app-api` にのみ依存する
 - `spec` は実行時依存ではなく、設計と検証の基準である
 
-## 5. AWS 化を見据えた読み替え
+## 5. Kubernetes staging 化を見据えた読み替え
 
 - `desktop-ui` は薄いクライアントのまま保つ
-- `customers-etl`、`commerce-etl`、`purchase-insights`、`decision-engine` はジョブとして AWS 側へ移せるようにする
-- `app-api` は GUI と AWS 内部サービスの境界になる
+- `customers-etl`、`commerce-etl`、`purchase-insights`、`decision-engine` は Kubernetes Job または CronJob として移せるようにする
+- `app-api` は GUI と Kubernetes 内部サービスの境界になる
 - `simulation_report_v0.1` JSON は API/Reporting 境界に残す

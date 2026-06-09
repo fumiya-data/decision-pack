@@ -57,13 +57,13 @@ GUI を API 前提の薄いクライアントへ寄せる。
 - `app-api` の主要エンドポイントが固定されている
 - 顧客、購入履歴、在庫、シミュレーションの画面責務が決まっている
 
-## フェーズ 5: AWS 化
+## フェーズ 5: Kubernetes staging 化
 
 ### 目的
 
-ローカル実装を AWS 上の API とジョブ実行基盤へ移す。
+ローカル実装を、無料運用を前提にした Kubernetes 上の API とジョブ実行基盤へ移す。
 
 ### 完了条件
 
-- S3、RDS、API Gateway、Lambda、Step Functions、ECS/Fargate の責務が固定されている
-- GUI が AWS の内部サービスを直接参照しない
+- Kubernetes Deployment、Job、CronJob、Service、ConfigMap、Secret、PersistentVolume の責務が固定されている
+- GUI が Kubernetes 内部の個別サービスを直接参照しない
